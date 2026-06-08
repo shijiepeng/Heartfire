@@ -1,0 +1,4922 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>心火 · Heartfire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Cormorant+Garamond:ital,wght@1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   1. DESIGN TOKENS — "家书 / 灶火" aesthetic
+   ============================================================ */
+:root {
+  /* Paper */
+  --paper:        #f1e7d3;
+  --paper-deep:   #ead9bd;
+  --paper-edge:   #d9c5a3;
+  --paper-shadow: rgba(120, 80, 30, 0.06);
+
+  /* Hearth (the dark space the fire lives in) */
+  --hearth-1: #2a1d12;
+  --hearth-2: #3a2818;
+  --hearth-3: #1f140a;
+
+  /* Ink (text) */
+  --ink-1: #2a1f18;   /* primary */
+  --ink-2: #5a4632;   /* secondary */
+  --ink-3: #8a7458;   /* tertiary */
+  --ink-4: #b5a384;   /* faint */
+  --rule:  #c8b48f;
+
+  /* Ember (the saturated fire color, used as accent) */
+  --ember-1: #c8351a;   /* deep red — seal color */
+  --ember-2: #e0451a;   /* red-orange */
+  --ember-3: #ed8038;   /* warm orange */
+  --ember-4: #ffb066;   /* glow */
+  --gold:    #b48838;   /* secondary accent */
+
+  /* Risk */
+  --risk-green:  #5e8e4a;
+  --risk-yellow: #c89238;
+  --risk-orange: #c8581e;
+  --risk-red:    #b8281a;
+
+  /* Type */
+  --serif: 'Noto Serif SC', 'Songti SC', 'STSong', 'Source Han Serif', serif;
+  --display: 'Cormorant Garamond', 'Noto Serif SC', serif;
+  --mono: 'JetBrains Mono', 'SF Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: #1a1410;
+  color: var(--ink-1);
+  font-family: var(--serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(200, 53, 26, 0.05), transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(180, 136, 56, 0.04), transparent 50%),
+    #1a1410;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  gap: 48px;
+}
+
+/* Paper grain — subtle SVG noise */
+.paper-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(180, 136, 56, 0.06), transparent 60%),
+    radial-gradient(ellipse at 70% 80%, rgba(200, 53, 26, 0.04), transparent 60%),
+    var(--paper);
+  pointer-events: none;
+}
+.paper-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.27 0 0 0 0 0.16 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+}
+
+/* ============================================================
+   2. STAGE LAYOUT
+   ============================================================ */
+.stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+}
+
+@media (max-width: 900px) {
+  body { padding: 0; background: var(--paper); }
+  .stage { gap: 0; flex-direction: column; }
+  .dev-panel { display: none !important; }
+}
+
+/* ============================================================
+   3. DEV PANEL — Scenario switcher
+   ============================================================ */
+.dev-panel {
+  width: 220px;
+  flex-shrink: 0;
+  color: #c5b69d;
+}
+.dp-eyebrow {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 11px;
+  letter-spacing: 0.35em;
+  color: var(--ember-4);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.dp-title {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  color: #f1e7d3;
+  margin-bottom: 14px;
+}
+.dp-sub {
+  font-size: 11px;
+  color: #8a7458;
+  line-height: 1.7;
+  margin-bottom: 22px;
+  font-family: var(--serif);
+}
+.dp-sub em {
+  color: var(--ember-4);
+  font-style: normal;
+  font-family: var(--display);
+}
+.scene-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.scene-btn {
+  padding: 11px 14px;
+  background: rgba(241, 231, 211, 0.04);
+  border: 1px solid rgba(241, 231, 211, 0.08);
+  border-radius: 4px;
+  color: #b5a384;
+  font-family: var(--serif);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  letter-spacing: 0.1em;
+}
+.scene-btn:hover {
+  border-color: rgba(241, 231, 211, 0.18);
+  color: #f1e7d3;
+}
+.scene-btn.active {
+  background: rgba(200, 53, 26, 0.12);
+  border-color: rgba(200, 53, 26, 0.4);
+  color: #f1e7d3;
+}
+.scene-btn .key {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: #5a4632;
+  letter-spacing: 0.1em;
+  margin-left: auto;
+}
+.scene-btn.active .key { color: var(--ember-4); }
+.scene-btn .risk-dot {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+}
+.dp-foot {
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(241, 231, 211, 0.06);
+  font-family: var(--mono);
+  font-size: 9px;
+  color: #5a4632;
+  letter-spacing: 0.15em;
+  line-height: 1.9;
+}
+
+/* ============================================================
+   4. PHONE FRAME
+   ============================================================ */
+.phone {
+  width: 390px;
+  height: 844px;
+  background: #1a1410;
+  border-radius: 52px;
+  padding: 12px;
+  border: 1px solid #2a2218;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset,
+    0 40px 100px rgba(0, 0, 0, 0.6),
+    0 0 60px rgba(200, 53, 26, 0.06);
+  position: relative;
+  flex-shrink: 0;
+}
+.screen {
+  width: 100%;
+  height: 100%;
+  background: var(--paper);
+  border-radius: 40px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+}
+
+@media (max-width: 900px) {
+  body { background: var(--paper); }
+  .phone { width: 100vw; height: 100vh; border-radius: 0; padding: 0; border: none; box-shadow: none; }
+  .screen { border-radius: 0; }
+}
+
+/* ============================================================
+   5. STATUS BAR
+   ============================================================ */
+.status-bar {
+  height: 44px;
+  padding: 16px 28px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-2);
+  font-weight: 500;
+  flex-shrink: 0;
+  z-index: 10;
+  position: relative;
+  letter-spacing: 0.02em;
+}
+.status-bar .icons {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.status-bar svg { width: 13px; height: 13px; opacity: 0.65; }
+
+/* ============================================================
+   6. TAB BAR
+   ============================================================ */
+.tab-bar {
+  height: 84px;
+  background: var(--paper-deep);
+  border-top: 1px solid var(--rule);
+  display: flex;
+  padding: 12px 16px 24px;
+  flex-shrink: 0;
+  z-index: 10;
+  position: relative;
+}
+.tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-4);
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  cursor: pointer;
+  transition: color 0.25s;
+  padding-top: 6px;
+  font-family: var(--serif);
+}
+.tab svg { width: 22px; height: 22px; transition: all 0.25s; stroke-width: 1.5; }
+.tab.active { color: var(--ember-1); }
+.tab.active svg {
+  stroke-width: 2;
+  filter: drop-shadow(0 0 0 currentColor);
+}
+.tab:active { transform: scale(0.95); }
+
+/* ============================================================
+   7. SCREEN PAGES
+   ============================================================ */
+.screen-body {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+.screen-page {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  overflow: hidden;
+}
+.screen-page.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.scroll-area::-webkit-scrollbar { display: none; }
+
+/* ============================================================
+   8. HOME — 心火（家书风格）
+   ============================================================ */
+.home-top {
+  padding: 4px 28px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+.home-date {
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--ink-2);
+  letter-spacing: 0.1em;
+}
+.home-date .roman {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-left: 8px;
+  letter-spacing: 0.2em;
+}
+.device-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background: var(--paper-deep);
+  border: 1px solid var(--paper-edge);
+  border-radius: 100px;
+  font-size: 11px;
+  color: var(--ink-2);
+  font-family: var(--mono);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.device-chip:active { transform: scale(0.95); }
+.device-chip .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ember-1);
+  box-shadow: 0 0 4px rgba(200, 53, 26, 0.6);
+  animation: pulse-dot 2.2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* The hearth — dark box containing the flame */
+.hearth-wrap {
+  margin: 18px 28px 0;
+  position: relative;
+  flex-shrink: 0;
+}
+.hearth-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ink-3);
+  letter-spacing: 0.25em;
+}
+.hearth-label-row .left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hearth-label-row .rule-mini {
+  width: 24px; height: 1px;
+  background: var(--rule);
+}
+.hearth-label-row .state {
+  text-transform: lowercase;
+  color: var(--ember-1);
+  font-weight: 500;
+}
+.hearth {
+  position: relative;
+  height: 230px;
+  background: #080604;
+  border-radius: 12px 12px 6px 6px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 180, 0.06),
+    inset 0 -20px 30px rgba(0, 0, 0, 0.4),
+    0 1px 0 rgba(255, 240, 220, 0.4),
+    0 4px 16px rgba(80, 30, 0, 0.18);
+}
+/* Inner hearth wall texture */
+.hearth::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  pointer-events: none;
+}
+/* Hearth bricks pattern, subtle */
+.hearth::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(90deg, rgba(0,0,0,0.15) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(0,0,0,0.15) 1px, transparent 1px);
+  background-size: 40px 16px;
+  background-position: 0 0, 0 0;
+  opacity: 0.2;
+  pointer-events: none;
+}
+.hearth-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.heartfire-image {
+  width: 188px;
+  height: 188px;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+  transition: opacity 0.28s ease, filter 0.35s ease, box-shadow 0.4s ease;
+}
+.beat-pulse {
+  display: none;
+}
+@keyframes heart-beat {
+  0%, 100% { opacity: 0.6; }
+  20% { opacity: 1; }
+  40% { opacity: 0.6; }
+  60% { opacity: 0.85; }
+}
+
+/* Glow spilling from hearth onto paper */
+.hearth-glow {
+  display: none;
+}
+
+/* Heart's letter */
+.letter {
+  margin: 18px 28px 0;
+  flex-shrink: 0;
+}
+.letter-text {
+  font-family: var(--serif);
+  font-size: 17px;
+  color: var(--ink-1);
+  line-height: 1.85;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  white-space: pre-line;
+  position: relative;
+}
+.letter-text::before {
+  content: '「';
+  position: absolute;
+  left: -8px;
+  top: -4px;
+  color: var(--ember-1);
+  font-weight: 500;
+  font-size: 18px;
+}
+.letter-text::after {
+  content: '」';
+  color: var(--ember-1);
+  font-weight: 500;
+  margin-left: 2px;
+}
+.letter-text em {
+  color: var(--ember-1);
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--ember-3);
+  padding-bottom: 1px;
+}
+.letter-sign {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  font-family: var(--serif);
+  font-size: 12px;
+  color: var(--ink-3);
+  letter-spacing: 0.2em;
+}
+
+/* Red seal — heart's signature */
+.seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--ember-1);
+  color: #f5e6d0;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1;
+  border-radius: 2px;
+  letter-spacing: 0;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.15),
+    inset 0 0 8px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.15);
+  transform: rotate(-3deg);
+  position: relative;
+  flex-shrink: 0;
+}
+.seal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.3 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: lighten;
+  opacity: 0.4;
+  border-radius: 2px;
+}
+.seal.small {
+  width: 20px;
+  height: 20px;
+  font-size: 13px;
+}
+
+/* 7 days mini-embers */
+.week-strip {
+  margin: 18px 28px 0;
+  flex-shrink: 0;
+}
+.week-strip-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.week-label {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.25em;
+  white-space: nowrap;
+}
+.week-dots {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  justify-content: center;
+}
+.wdot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c, var(--ink-4));
+  transition: all 0.4s ease;
+  position: relative;
+}
+.wdot.today {
+  width: 10px;
+  height: 10px;
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 3px var(--c, var(--ember-1)), 0 0 10px var(--c-glow);
+}
+.week-strip-meta {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+  text-align: right;
+}
+
+/* Metrics — two columns, minimal */
+.metrics {
+  margin: 16px 28px 0;
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  align-items: center;
+  flex-shrink: 0;
+}
+.metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 0;
+}
+.metric .val {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 36px;
+  color: var(--ink-1);
+  line-height: 1;
+  font-weight: 500;
+}
+.metric .val .unit {
+  font-size: 12px;
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-style: normal;
+  margin-left: 5px;
+  letter-spacing: 0.05em;
+}
+.metric .lbl {
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.4em;
+  margin-top: 8px;
+  font-family: var(--serif);
+}
+.metric-divider {
+  width: 1px;
+  height: 36px;
+  background: var(--rule);
+}
+
+/* ============================================================
+   9. CHAT — 对话
+   ============================================================ */
+.chat-header {
+  padding: 10px 24px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--rule);
+  flex-shrink: 0;
+  background: var(--paper);
+}
+.chat-avatar-wrap {
+  position: relative;
+}
+.chat-avatar-wrap .seal {
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+  transform: rotate(-4deg);
+  animation: seal-pulse 1.5s ease-in-out infinite;
+}
+@keyframes seal-pulse {
+  0%, 100% { transform: rotate(-4deg) scale(1); }
+  20% { transform: rotate(-4deg) scale(1.08); }
+  40% { transform: rotate(-4deg) scale(1); }
+  60% { transform: rotate(-4deg) scale(1.05); }
+}
+.chat-name {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--ink-1);
+  font-weight: 500;
+  letter-spacing: 0.15em;
+}
+.chat-name .sub {
+  display: block;
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.15em;
+  margin-top: 2px;
+}
+
+.chat-stream {
+  padding: 20px 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100%;
+}
+.msg-time {
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-4);
+  letter-spacing: 0.2em;
+  margin: 4px 0;
+}
+.msg-time::before, .msg-time::after {
+  content: '——';
+  margin: 0 8px;
+  color: var(--paper-edge);
+}
+
+.msg {
+  max-width: 84%;
+  font-size: 14.5px;
+  line-height: 1.85;
+  letter-spacing: 0.03em;
+  white-space: pre-wrap;
+  animation: msg-appear 0.4s ease;
+  font-family: var(--serif);
+}
+@keyframes msg-appear {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.msg.heart {
+  align-self: flex-start;
+  position: relative;
+  padding: 14px 18px;
+  background: var(--paper-deep);
+  border-left: 3px solid var(--ember-1);
+  border-radius: 2px 14px 14px 2px;
+  color: var(--ink-1);
+}
+.msg.heart::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--ember-1);
+  opacity: 0.4;
+}
+.msg.heart.serious {
+  background: rgba(184, 40, 26, 0.08);
+  border-left-color: var(--risk-red);
+  color: var(--ink-1);
+}
+.msg.heart.serious strong {
+  color: var(--risk-red);
+  font-weight: 600;
+}
+.msg.heart em {
+  color: var(--ember-1);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.msg.user {
+  align-self: flex-end;
+  padding: 12px 16px;
+  background: transparent;
+  border: 1px solid var(--paper-edge);
+  border-radius: 14px 14px 2px 14px;
+  color: var(--ink-2);
+}
+
+/* Embedded micro action */
+.embedded-action {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: rgba(255, 240, 220, 0.4);
+  border: 1px dashed var(--ember-1);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.embedded-action .info {
+  flex: 1;
+}
+.embedded-action .info .title {
+  font-size: 13px;
+  color: var(--ink-1);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+}
+.embedded-action .info .reason {
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 3px;
+  font-family: var(--serif);
+}
+.embedded-action .start {
+  padding: 7px 14px;
+  background: var(--ember-1);
+  color: var(--paper);
+  border: none;
+  border-radius: 2px;
+  font-family: var(--serif);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.embedded-action .start:active { transform: scale(0.96); }
+
+.quick-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-self: flex-start;
+  max-width: 90%;
+  animation: msg-appear 0.4s ease 0.2s backwards;
+}
+.qa-btn {
+  padding: 8px 14px;
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  border-radius: 100px;
+  font-size: 12px;
+  color: var(--ink-2);
+  font-family: var(--serif);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.qa-btn:hover { border-color: var(--ember-1); color: var(--ember-1); }
+.qa-btn:active { transform: scale(0.96); }
+.qa-btn.primary {
+  background: var(--ember-1);
+  color: var(--paper);
+  border-color: transparent;
+  font-weight: 500;
+}
+.qa-btn.danger {
+  background: rgba(184, 40, 26, 0.1);
+  border-color: var(--risk-red);
+  color: var(--risk-red);
+  font-weight: 500;
+}
+
+.typing-dots {
+  align-self: flex-start;
+  padding: 14px 18px;
+  background: var(--paper-deep);
+  border-left: 3px solid var(--ember-1);
+  border-radius: 2px 14px 14px 2px;
+  display: flex;
+  gap: 5px;
+}
+.typing-dots span {
+  width: 6px;
+  height: 6px;
+  background: var(--ember-1);
+  border-radius: 50%;
+  animation: typing 1.2s ease-in-out infinite;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing {
+  0%, 60%, 100% { transform: scale(0.7); opacity: 0.4; }
+  30% { transform: scale(1); opacity: 1; }
+}
+
+.chat-suggestions {
+  padding: 10px 16px 6px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  border-top: 1px solid var(--rule);
+  background: var(--paper);
+}
+.chat-suggestions::-webkit-scrollbar { display: none; }
+.suggestion {
+  padding: 7px 14px;
+  background: var(--paper-deep);
+  border: 1px solid var(--paper-edge);
+  border-radius: 100px;
+  font-size: 12px;
+  color: var(--ink-2);
+  font-family: var(--serif);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.suggestion:hover { border-color: var(--ember-1); color: var(--ember-1); }
+.suggestion:active { transform: scale(0.95); }
+
+.chat-input {
+  margin: 6px 16px 14px;
+  padding: 5px 5px 5px 18px;
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.chat-input input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--ink-1);
+  font-size: 13px;
+  font-family: var(--serif);
+  padding: 9px 0;
+  letter-spacing: 0.02em;
+}
+.chat-input input::placeholder {
+  color: var(--ink-4);
+  font-family: var(--serif);
+}
+.chat-input .send-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ember-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--paper);
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.chat-input .send-btn:active { transform: scale(0.92); }
+.chat-input .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ============================================================
+   10. FAMILY — 牵绊
+   ============================================================ */
+.fam-hero {
+  padding: 20px 28px 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.fam-hero .eyebrow {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ember-1);
+  letter-spacing: 0.4em;
+}
+.fam-hero h2 {
+  font-family: var(--serif);
+  font-size: 26px;
+  color: var(--ink-1);
+  font-weight: 500;
+  margin-top: 8px;
+  letter-spacing: 0.4em;
+}
+.fam-hero p {
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-top: 12px;
+  line-height: 1.8;
+}
+
+.fam-circle {
+  position: relative;
+  height: 240px;
+  margin: 0 auto 12px;
+  width: 280px;
+}
+.fam-circle .center {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%) rotate(-4deg);
+  width: 70px; height: 70px;
+  background: var(--ember-1);
+  color: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 36px;
+  font-weight: 700;
+  z-index: 2;
+  border-radius: 4px;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.15),
+    inset 0 0 12px rgba(0, 0, 0, 0.1),
+    0 0 30px rgba(200, 53, 26, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.15);
+  animation: heart-beat-seal 1.5s ease-in-out infinite;
+}
+.fam-circle .center::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='70' height='70'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.3 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: lighten;
+  opacity: 0.4;
+  border-radius: 4px;
+}
+@keyframes heart-beat-seal {
+  0%, 100% { transform: translate(-50%, -50%) rotate(-4deg) scale(1); }
+  20% { transform: translate(-50%, -50%) rotate(-4deg) scale(1.08); }
+  40% { transform: translate(-50%, -50%) rotate(-4deg) scale(1); }
+  60% { transform: translate(-50%, -50%) rotate(-4deg) scale(1.04); }
+}
+.fam-ring {
+  position: absolute;
+  inset: 20px;
+  border-radius: 50%;
+  border: 1px dashed var(--paper-edge);
+  animation: ring-rotate 50s linear infinite;
+}
+@keyframes ring-rotate {
+  to { transform: rotate(360deg); }
+}
+.fam-member {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  background: var(--paper-deep);
+  border: 1px solid var(--paper-edge);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 18px;
+  color: var(--ink-1);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  border-radius: 4px;
+  letter-spacing: 0;
+}
+.fam-member:hover { border-color: var(--ember-1); color: var(--ember-1); }
+.fam-member:active { transform: scale(0.92) !important; }
+.fam-member .ring-anim {
+  position: absolute;
+  inset: -4px;
+  border-radius: 4px;
+  border: 2px solid var(--ember-1);
+  opacity: 0;
+  animation: touch-ring 3s ease-out infinite;
+  pointer-events: none;
+}
+.fam-member.touching .ring-anim { opacity: 1; }
+@keyframes touch-ring {
+  0% { transform: scale(0.85); opacity: 0.8; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+.fam-member.m1 { top: 0; left: 50%; transform: translateX(-50%); }
+.fam-member.m2 { top: 50%; right: 0; transform: translateY(-50%); }
+.fam-member.m3 { bottom: 0; left: 50%; transform: translateX(-50%); }
+.fam-member.m4 { top: 50%; left: 0; transform: translateY(-50%); }
+.fam-member.m1:active { transform: translateX(-50%) scale(0.92); }
+.fam-member.m2:active { transform: translateY(-50%) scale(0.92); }
+.fam-member.m3:active { transform: translateX(-50%) scale(0.92); }
+.fam-member.m4:active { transform: translateY(-50%) scale(0.92); }
+
+.fam-touches {
+  margin: 4px 24px 16px;
+  padding: 18px 18px;
+  background: var(--paper-deep);
+  border: 1px solid var(--paper-edge);
+  border-radius: 6px;
+}
+.fam-touches h4 {
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--ink-2);
+  letter-spacing: 0.3em;
+  margin-bottom: 14px;
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.fam-touches h4 .badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--paper);
+  background: var(--ember-1);
+  padding: 3px 8px;
+  border-radius: 2px;
+  letter-spacing: 0.15em;
+  font-weight: 500;
+}
+.touch-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--paper-edge);
+}
+.touch-row:last-child { border-bottom: none; padding-bottom: 0; }
+.touch-avatar {
+  width: 34px;
+  height: 34px;
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 14px;
+  color: var(--ink-2);
+  border-radius: 3px;
+  font-weight: 500;
+}
+.touch-row.self .touch-avatar {
+  background: var(--ember-1);
+  color: var(--paper);
+  border-color: transparent;
+}
+.touch-meta { flex: 1; }
+.touch-meta .who {
+  font-size: 13px;
+  color: var(--ink-1);
+  letter-spacing: 0.05em;
+}
+.touch-meta .what {
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 3px;
+  font-family: var(--serif);
+}
+.touch-time {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-4);
+  letter-spacing: 0.1em;
+}
+
+.fam-share {
+  margin: 0 24px 24px;
+}
+.share-level {
+  padding: 14px 18px;
+  background: var(--paper-deep);
+  border: 1px solid var(--paper-edge);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.share-level:active { transform: scale(0.99); }
+.share-level:hover { border-color: var(--ember-1); }
+.share-level .l {
+  font-size: 13px;
+  color: var(--ink-1);
+  letter-spacing: 0.05em;
+}
+.share-level .l small {
+  display: block;
+  color: var(--ink-3);
+  font-size: 11px;
+  margin-top: 4px;
+  font-family: var(--serif);
+}
+.pill {
+  padding: 4px 12px;
+  border-radius: 2px;
+  font-size: 10px;
+  font-family: var(--mono);
+  letter-spacing: 0.2em;
+  background: var(--ember-1);
+  color: var(--paper);
+  font-weight: 500;
+}
+
+/* ============================================================
+   10b. TRAJECTORY — 轨迹（家书风格）
+   ============================================================ */
+.tj-hero {
+  padding: 20px 28px 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.tj-hero .eyebrow {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ember-1);
+  letter-spacing: 0.4em;
+}
+.tj-hero h2 {
+  font-family: var(--serif);
+  font-size: 26px;
+  color: var(--ink-1);
+  font-weight: 500;
+  margin-top: 8px;
+  letter-spacing: 0.4em;
+}
+
+/* Heart's weekly letter at the top */
+.tj-letter {
+  margin: 0 28px 22px;
+  position: relative;
+}
+.tj-letter-text {
+  font-family: var(--serif);
+  font-size: 15.5px;
+  color: var(--ink-1);
+  line-height: 1.95;
+  letter-spacing: 0.04em;
+  position: relative;
+  white-space: pre-line;
+}
+.tj-letter-text::before {
+  content: '「';
+  position: absolute;
+  left: -8px;
+  top: -4px;
+  color: var(--ember-1);
+  font-weight: 500;
+  font-size: 18px;
+}
+.tj-letter-text::after {
+  content: '」';
+  color: var(--ember-1);
+  font-weight: 500;
+  margin-left: 2px;
+}
+.tj-letter-text em {
+  color: var(--ember-1);
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--ember-3);
+  padding-bottom: 1px;
+}
+.tj-letter-sign {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  font-family: var(--serif);
+  font-size: 12px;
+  color: var(--ink-3);
+  letter-spacing: 0.2em;
+}
+
+/* Bar chart card */
+.tj-chart-card {
+  margin: 0 24px 18px;
+  padding: 20px 20px 16px;
+  background: var(--paper-deep);
+  border: 1px solid var(--paper-edge);
+  border-radius: 4px;
+  position: relative;
+}
+.tj-chart-card::before {
+  content: '';
+  position: absolute;
+  top: 10px; left: 10px;
+  width: 12px; height: 12px;
+  border-top: 1px solid var(--ember-1);
+  border-left: 1px solid var(--ember-1);
+  opacity: 0.4;
+}
+.tj-chart-card::after {
+  content: '';
+  position: absolute;
+  bottom: 10px; right: 10px;
+  width: 12px; height: 12px;
+  border-bottom: 1px solid var(--ember-1);
+  border-right: 1px solid var(--ember-1);
+  opacity: 0.4;
+}
+.tj-chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 16px;
+}
+.tj-chart-title {
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--ink-2);
+  letter-spacing: 0.3em;
+  font-weight: 500;
+}
+.tj-chart-meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+}
+.tj-bars {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 110px;
+  gap: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--paper-edge);
+}
+.tj-bar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  position: relative;
+}
+.tj-bar {
+  width: 100%;
+  max-width: 24px;
+  border-radius: 1px;
+  background: var(--c);
+  position: relative;
+  transition: height 0.6s ease;
+  box-shadow: 0 0 0 0 var(--c);
+}
+.tj-bar.today {
+  box-shadow: 0 0 12px var(--c-glow);
+}
+.tj-bar.today::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--c);
+}
+.tj-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 10px;
+}
+.tj-bar-label {
+  flex: 1;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.05em;
+}
+.tj-bar-label.today {
+  color: var(--ember-1);
+  font-weight: 600;
+}
+.tj-chart-footnote {
+  margin-top: 14px;
+  font-family: var(--serif);
+  font-size: 12px;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+.tj-chart-footnote em {
+  color: var(--ember-1);
+  font-style: normal;
+  font-weight: 500;
+}
+
+/* Weekly events */
+.tj-events {
+  margin: 0 24px 24px;
+  padding: 18px 18px 16px;
+  background: var(--paper-deep);
+  border: 1px solid var(--paper-edge);
+  border-radius: 4px;
+}
+.tj-events h4 {
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--ink-2);
+  letter-spacing: 0.3em;
+  margin-bottom: 14px;
+  font-weight: 500;
+}
+.tj-event {
+  display: flex;
+  gap: 14px;
+  padding: 11px 0;
+  border-bottom: 1px dashed var(--paper-edge);
+}
+.tj-event:last-child { border-bottom: none; padding-bottom: 0; }
+.tj-event-time {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.05em;
+  width: 56px;
+  flex-shrink: 0;
+  padding-top: 3px;
+  line-height: 1.6;
+}
+.tj-event-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c);
+  margin-top: 7px;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px var(--c-glow);
+}
+.tj-event-text {
+  flex: 1;
+  font-size: 13px;
+  color: var(--ink-1);
+  line-height: 1.65;
+  letter-spacing: 0.03em;
+}
+.tj-event-text .sub {
+  display: block;
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 3px;
+  font-family: var(--serif);
+}
+
+/* ============================================================
+   11. MODALS
+   ============================================================ */
+
+/* ============================================================
+   11b. SCORE GRID (4 abstract scores, 2x2)
+   ============================================================ */
+.score-grid {
+  margin: 18px 24px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.score-card {
+  padding: 14px 14px 12px;
+  background: var(--paper-deep);
+  border: 1px solid var(--paper-edge);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.score-card:active { transform: scale(0.98); }
+.score-card:hover { border-color: var(--ember-1); }
+.score-card .sc-label {
+  font-family: var(--serif);
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.4em;
+  margin-bottom: 6px;
+}
+.score-card .sc-val-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.score-card .sc-val {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 30px;
+  color: var(--ink-1);
+  line-height: 1;
+  font-weight: 500;
+}
+.score-card .sc-total {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.05em;
+}
+.score-card .sc-bar {
+  margin-top: 8px;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.score-card .sc-bar-fill {
+  height: 100%;
+  background: var(--sc-c, var(--ember-1));
+  border-radius: 100px;
+  transition: width 0.6s ease, background 0.4s ease;
+  box-shadow: 0 0 6px var(--sc-glow, transparent);
+}
+.score-card .sc-info {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--paper-edge);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 10px;
+  color: var(--ink-4);
+  font-weight: 500;
+}
+
+/* Score detail modal */
+.modal-score .score-card-modal {
+  width: 320px;
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  border-radius: 6px;
+  padding: 28px 26px 22px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  position: relative;
+}
+.modal-score .score-card-modal::before {
+  content: '';
+  position: absolute;
+  top: 18px; left: 18px;
+  width: 16px; height: 16px;
+  border-top: 1px solid var(--ember-1);
+  border-left: 1px solid var(--ember-1);
+}
+.modal-score .score-card-modal::after {
+  content: '';
+  position: absolute;
+  bottom: 18px; right: 18px;
+  width: 16px; height: 16px;
+  border-bottom: 1px solid var(--ember-1);
+  border-right: 1px solid var(--ember-1);
+}
+.sc-modal-eyebrow {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ember-1);
+  letter-spacing: 0.4em;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.sc-modal-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--ink-1);
+  font-weight: 500;
+  letter-spacing: 0.4em;
+  text-align: center;
+  margin-bottom: 18px;
+}
+.sc-modal-bignum {
+  text-align: center;
+  margin-bottom: 22px;
+}
+.sc-modal-bignum .num {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 60px;
+  color: var(--ember-1);
+  line-height: 1;
+  font-weight: 500;
+}
+.sc-modal-bignum .of {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--ink-3);
+  margin-left: 4px;
+  letter-spacing: 0.1em;
+}
+.sc-modal-divider {
+  height: 1px;
+  background: var(--paper-edge);
+  margin: 0 8px 18px;
+}
+.sc-modal-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 12px;
+}
+.sc-modal-row .k {
+  color: var(--ink-3);
+  font-family: var(--serif);
+  letter-spacing: 0.2em;
+}
+.sc-modal-row .v {
+  color: var(--ink-1);
+  font-family: var(--serif);
+  letter-spacing: 0.1em;
+  font-weight: 500;
+}
+.sc-modal-row .v em {
+  color: var(--ember-1);
+  font-style: normal;
+}
+.sc-modal-judge {
+  margin-top: 12px;
+  padding: 14px;
+  background: var(--paper-deep);
+  border-left: 2px solid var(--ember-1);
+  border-radius: 4px;
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--ink-1);
+  line-height: 1.75;
+  letter-spacing: 0.04em;
+}
+.sc-modal-judge .label {
+  display: block;
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--ember-1);
+  letter-spacing: 0.3em;
+  margin-bottom: 6px;
+}
+.sc-modal-close {
+  width: 100%;
+  margin-top: 18px;
+  padding: 11px;
+  background: transparent;
+  border: 1px solid var(--paper-edge);
+  border-radius: 2px;
+  color: var(--ink-2);
+  font-family: var(--serif);
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  cursor: pointer;
+}
+.sc-modal-close:hover { border-color: var(--ember-1); color: var(--ember-1); }
+
+/* ============================================================
+   11c. VOICE ICONS
+   ============================================================ */
+.mic-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--paper-edge);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-2);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.mic-btn:hover { border-color: var(--ember-1); color: var(--ember-1); }
+.mic-btn:active { transform: scale(0.92); }
+.mic-btn.recording {
+  background: var(--ember-1);
+  border-color: var(--ember-1);
+  color: var(--paper);
+  animation: mic-pulse 1.2s ease-in-out infinite;
+}
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200, 53, 26, 0.5); }
+  50% { box-shadow: 0 0 0 10px rgba(200, 53, 26, 0); }
+}
+.mic-btn svg { width: 16px; height: 16px; }
+
+.voice-toggle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--paper-edge);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-3);
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.2s;
+}
+.voice-toggle:hover { border-color: var(--ember-1); color: var(--ember-1); }
+.voice-toggle.on {
+  background: var(--ember-1);
+  border-color: var(--ember-1);
+  color: var(--paper);
+}
+.voice-toggle svg { width: 14px; height: 14px; }
+
+.msg-speaker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: transparent;
+  border: none;
+  color: var(--ember-1);
+  cursor: pointer;
+  margin-left: 8px;
+  vertical-align: middle;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  border-radius: 50%;
+}
+.msg-speaker:hover { opacity: 1; }
+.msg-speaker.playing {
+  opacity: 1;
+  animation: speaker-pulse 1.5s ease-in-out infinite;
+}
+@keyframes speaker-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.msg-speaker svg { width: 13px; height: 13px; }
+
+/* Voice recording overlay */
+.voice-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(241, 231, 211, 0.94);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 180;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.voice-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.voice-orb {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--ember-2), var(--ember-3));
+  box-shadow: 0 0 60px var(--ember-glow);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--paper);
+  font-size: 32px;
+  animation: voice-orb-pulse 1s ease-in-out infinite;
+}
+@keyframes voice-orb-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+.voice-orb-rings::before,
+.voice-orb-rings::after {
+  content: '';
+  position: absolute;
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  border: 2px solid var(--ember-2);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+.voice-orb-rings::before { animation: voice-ring 1.8s ease-out infinite; }
+.voice-orb-rings::after { animation: voice-ring 1.8s ease-out infinite 0.6s; }
+@keyframes voice-ring {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+}
+.voice-overlay-text {
+  margin-top: 32px;
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ember-1);
+  letter-spacing: 0.3em;
+  text-align: center;
+}
+.voice-overlay-hint {
+  margin-top: 6px;
+  font-family: var(--serif);
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.voice-overlay-cancel {
+  margin-top: 32px;
+  padding: 10px 24px;
+  background: transparent;
+  border: 1px solid var(--ember-1);
+  border-radius: 100px;
+  color: var(--ember-1);
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+}
+
+/* ============================================================
+   12. FAMILY TOUCHES ON HOME
+   ============================================================ */
+.home-touches {
+  margin: 16px 24px 0;
+  flex-shrink: 0;
+}
+.home-touches .ht-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.3em;
+}
+.home-touches .ht-head .rule-mini {
+  width: 18px; height: 1px;
+  background: var(--rule);
+}
+.home-touches .ht-head .count {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--paper);
+  background: var(--ember-1);
+  padding: 2px 7px;
+  border-radius: 2px;
+  letter-spacing: 0.1em;
+}
+.ht-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px dashed var(--paper-edge);
+}
+.ht-row:last-child { border-bottom: none; }
+.ht-row.unread .ht-from { color: var(--ember-1); font-weight: 500; }
+.ht-row.unread::before {
+  content: '';
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--ember-1);
+  box-shadow: 0 0 4px rgba(200, 53, 26, 0.5);
+  flex-shrink: 0;
+  margin-left: -2px;
+}
+.ht-avatar {
+  width: 28px;
+  height: 28px;
+  background: var(--paper-deep);
+  border: 1px solid var(--paper-edge);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--ink-1);
+  border-radius: 3px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.ht-action-icon {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ember-1);
+  flex-shrink: 0;
+  font-size: 16px;
+}
+.ht-text {
+  flex: 1;
+  font-size: 12.5px;
+  color: var(--ink-1);
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+}
+.ht-text .ht-from { color: var(--ink-2); }
+.ht-text .ht-msg {
+  display: block;
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 1px;
+  font-family: var(--serif);
+}
+.ht-time {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-4);
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   13. SETTINGS MODAL (bottom sheet style)
+   ============================================================ */
+.modal-settings {
+  align-items: flex-end;
+}
+.settings-sheet {
+  width: 100%;
+  max-height: 88%;
+  background: var(--paper);
+  border-radius: 24px 24px 0 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.5);
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.modal-settings.active .settings-sheet { transform: translateY(0); }
+
+.settings-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--paper-edge);
+  border-radius: 100px;
+  margin: 10px auto 0;
+  flex-shrink: 0;
+}
+.settings-header {
+  padding: 18px 24px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--paper-edge);
+  flex-shrink: 0;
+}
+.settings-header h3 {
+  font-family: var(--serif);
+  font-size: 17px;
+  color: var(--ink-1);
+  letter-spacing: 0.3em;
+  font-weight: 500;
+}
+.settings-close {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  color: var(--ink-3);
+  font-size: 22px;
+  cursor: pointer;
+  line-height: 1;
+  font-family: var(--serif);
+}
+.settings-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 24px 16px;
+}
+.settings-scroll::-webkit-scrollbar { display: none; }
+
+.settings-section {
+  padding: 16px 0;
+  border-bottom: 1px dashed var(--paper-edge);
+}
+.settings-section:last-child { border-bottom: none; }
+
+.settings-label {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--ember-1);
+  letter-spacing: 0.3em;
+  margin-bottom: 14px;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+.settings-row .row-label {
+  font-size: 13px;
+  color: var(--ink-2);
+  letter-spacing: 0.2em;
+  width: 64px;
+  flex-shrink: 0;
+}
+.settings-row .row-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  border-bottom: 1px solid var(--paper-edge);
+  padding: 6px 0;
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--ink-1);
+  letter-spacing: 0.1em;
+  transition: border-color 0.2s;
+}
+.settings-row .row-input:focus { border-bottom-color: var(--ember-1); }
+
+/* Personality picker */
+.personality-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.personality-btn {
+  background: transparent;
+  border: 1px solid var(--paper-edge);
+  border-radius: 4px;
+  padding: 12px 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.personality-btn:active { transform: scale(0.99); }
+.personality-btn:hover { border-color: var(--ember-1); }
+.personality-btn.active {
+  background: rgba(200, 53, 26, 0.08);
+  border-color: var(--ember-1);
+}
+.personality-btn .p-seal {
+  width: 32px;
+  height: 32px;
+  background: var(--paper-deep);
+  border: 1px solid var(--paper-edge);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-2);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.personality-btn.active .p-seal {
+  background: var(--ember-1);
+  color: var(--paper);
+  border-color: transparent;
+  transform: rotate(-3deg);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+.personality-btn .p-info {
+  flex: 1;
+}
+.personality-btn .p-name {
+  font-family: var(--serif);
+  font-size: 14px;
+  color: var(--ink-1);
+  letter-spacing: 0.15em;
+  font-weight: 500;
+}
+.personality-btn .p-desc {
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 2px;
+  font-family: var(--serif);
+}
+.personality-btn .p-preview {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-top: 5px;
+}
+.personality-btn.active .p-preview { color: var(--ember-1); }
+
+/* Family list inside settings */
+.fam-settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.fam-settings-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--paper-deep);
+  border: 1px solid var(--paper-edge);
+  border-radius: 4px;
+}
+.fam-settings-row .ava {
+  width: 30px;
+  height: 30px;
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 13px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.fam-settings-row .meta { flex: 1; }
+.fam-settings-row .meta .name {
+  font-size: 13px;
+  color: var(--ink-1);
+}
+.fam-settings-row .meta .role {
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 2px;
+  font-family: var(--display);
+  font-style: italic;
+}
+.fam-settings-row .pill-mini {
+  padding: 3px 8px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-family: var(--mono);
+  letter-spacing: 0.1em;
+  background: rgba(94, 142, 74, 0.15);
+  color: #5e8e4a;
+}
+.fam-invite {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: 1px dashed var(--paper-edge);
+  border-radius: 4px;
+  color: var(--ember-1);
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.fam-invite:hover { border-color: var(--ember-1); background: rgba(200, 53, 26, 0.04); }
+
+/* Device mini info inside settings */
+.device-info-mini {
+  padding: 4px 0;
+}
+
+/* Settings done button */
+.settings-done-wrap {
+  padding: 12px 24px 20px;
+  border-top: 1px solid var(--paper-edge);
+  background: var(--paper);
+  flex-shrink: 0;
+}
+.settings-done {
+  width: 100%;
+  padding: 14px;
+  background: var(--ember-1);
+  color: var(--paper);
+  border: none;
+  border-radius: 6px;
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  cursor: pointer;
+}
+.settings-done:active { transform: scale(0.99); }
+
+/* ============================================================
+   14. ONBOARDING OVERLAY
+   ============================================================ */
+.modal-onboard {
+  background: var(--paper);
+  z-index: 250;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.4s;
+}
+.modal-onboard.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.modal-onboard .paper-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.onboard-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 64px 32px 32px;
+  position: relative;
+  z-index: 1;
+  overflow-y: auto;
+}
+.onboard-content::-webkit-scrollbar { display: none; }
+.onboard-step {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  animation: msg-appear 0.5s ease;
+}
+.onboard-step.active { display: flex; }
+
+.onboard-eyebrow {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ember-1);
+  letter-spacing: 0.4em;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.onboard-title {
+  font-family: var(--serif);
+  font-size: 26px;
+  color: var(--ink-1);
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  text-align: center;
+  margin-bottom: 14px;
+}
+.onboard-subtitle {
+  font-family: var(--serif);
+  font-size: 14px;
+  color: var(--ink-3);
+  line-height: 1.85;
+  text-align: center;
+  margin-bottom: 36px;
+  letter-spacing: 0.04em;
+}
+.onboard-subtitle em {
+  color: var(--ember-1);
+  font-style: normal;
+  font-weight: 500;
+}
+
+.onboard-name-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  border-bottom: 2px solid var(--ember-1);
+  padding: 10px 0;
+  font-family: var(--serif);
+  font-size: 26px;
+  color: var(--ink-1);
+  text-align: center;
+  letter-spacing: 0.2em;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+.onboard-name-input::placeholder {
+  color: var(--ink-4);
+  font-family: var(--serif);
+  font-weight: 400;
+}
+.onboard-name-hint {
+  text-align: center;
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-bottom: 32px;
+  letter-spacing: 0.1em;
+}
+
+/* Step 2: personality */
+.onboard-personality-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+/* Onboarding bottom nav */
+.onboard-nav {
+  padding: 12px 32px 56px;
+  display: flex;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+.onboard-btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: 6px;
+  font-family: var(--serif);
+  font-size: 14px;
+  letter-spacing: 0.3em;
+  cursor: pointer;
+  font-weight: 500;
+  border: none;
+  transition: all 0.2s;
+}
+.onboard-btn:active { transform: scale(0.98); }
+.onboard-btn.primary {
+  background: var(--ember-1);
+  color: var(--paper);
+}
+.onboard-btn.primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.onboard-btn.secondary {
+  background: transparent;
+  border: 1px solid var(--paper-edge);
+  color: var(--ink-2);
+  flex: 0 0 auto;
+  padding: 14px 20px;
+}
+.onboard-progress {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.onboard-progress .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--paper-edge);
+}
+.onboard-progress .dot.active {
+  background: var(--ember-1);
+  width: 20px;
+  border-radius: 100px;
+}
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(42, 31, 24, 0.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.modal-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Red Alert */
+.modal-alert {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 30%, rgba(184, 40, 26, 0.5), #1a0a08 70%);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+.modal-alert.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.alert-status {
+  height: 44px;
+  padding: 16px 28px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: #ffd5d0;
+  font-weight: 500;
+}
+.alert-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 28px;
+}
+.alert-body::-webkit-scrollbar { display: none; }
+.alert-header {
+  padding: 28px 24px 0;
+  text-align: center;
+}
+.alert-pulse {
+  width: 130px;
+  height: 130px;
+  margin: 16px auto 28px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.alert-pulse::before, .alert-pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--risk-red);
+}
+.alert-pulse::before { animation: alert-ring 1.8s ease-out infinite; }
+.alert-pulse::after { animation: alert-ring 1.8s ease-out infinite 0.6s; }
+@keyframes alert-ring {
+  0% { transform: scale(0.6); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+.alert-pulse .core {
+  width: 76px;
+  height: 76px;
+  border-radius: 6px;
+  background: var(--risk-red);
+  box-shadow: 0 0 60px var(--risk-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  color: var(--paper);
+  font-size: 36px;
+  font-weight: 700;
+  animation: alert-beat 0.8s ease-in-out infinite;
+  transform: rotate(-3deg);
+}
+@keyframes alert-beat {
+  0%, 100% { transform: rotate(-3deg) scale(1); }
+  50% { transform: rotate(-3deg) scale(1.08); }
+}
+.alert-eyebrow {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 13px;
+  color: #ff8a7c;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+}
+.alert-title {
+  font-family: var(--serif);
+  font-size: 30px;
+  color: #ffffff;
+  font-weight: 600;
+  margin-top: 12px;
+  letter-spacing: 0.3em;
+}
+
+.alert-msg {
+  margin: 18px 24px 26px;
+  padding: 22px;
+  background: rgba(184, 40, 26, 0.18);
+  border-left: 3px solid var(--risk-red);
+  font-family: var(--serif);
+  font-size: 15.5px;
+  line-height: 1.95;
+  color: #fff;
+  position: relative;
+}
+.alert-msg::before {
+  content: '「';
+  position: absolute;
+  top: 16px;
+  left: 8px;
+  color: #ff8a7c;
+  font-weight: 500;
+  font-size: 18px;
+}
+.alert-msg strong {
+  color: #ffd5d0;
+  font-weight: 600;
+}
+
+.alert-actions {
+  margin: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.alert-btn {
+  padding: 18px 20px;
+  border-radius: 6px;
+  border: none;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.2s;
+}
+.alert-btn:active { transform: scale(0.98); }
+.alert-btn.primary {
+  background: var(--risk-red);
+  color: white;
+  box-shadow: 0 0 30px rgba(184, 40, 26, 0.5);
+}
+.alert-btn.secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.alert-btn .ico { font-size: 18px; }
+
+.alert-checklist {
+  margin: 20px 24px 0;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  border-left: 2px solid #ff8a7c;
+}
+.alert-checklist .title {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 12px;
+  color: #ff8a7c;
+  letter-spacing: 0.3em;
+  margin-bottom: 12px;
+}
+.alert-checklist .item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 7px 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 13.5px;
+  line-height: 1.7;
+  font-family: var(--serif);
+}
+.alert-checklist .item::before {
+  content: '·';
+  color: var(--risk-red);
+  font-size: 24px;
+  line-height: 0.7;
+  margin-top: 6px;
+}
+.alert-disclaimer {
+  margin: 22px 24px 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.8;
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+.alert-dismiss {
+  margin: 18px auto 0;
+  display: block;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+/* Breathing */
+.modal-breathe {
+  background: rgba(42, 31, 24, 0.92);
+  backdrop-filter: blur(20px);
+}
+.breathe-card {
+  position: relative;
+  width: 320px;
+  text-align: center;
+  padding: 36px 28px;
+}
+.breathe-circle-wrap {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: 0 auto 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.breathe-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--ember-2), var(--ember-3) 50%, transparent 75%);
+  box-shadow: 0 0 60px rgba(232, 90, 30, 0.5);
+  animation: breathe 8s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(2.5); }
+}
+.breathe-circle-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px dashed rgba(241, 231, 211, 0.2);
+}
+.breathe-instruction {
+  font-family: var(--serif);
+  font-size: 24px;
+  color: var(--ember-4);
+  letter-spacing: 0.4em;
+  margin-bottom: 14px;
+  min-height: 32px;
+  font-weight: 400;
+}
+.breathe-count {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: rgba(241, 231, 211, 0.5);
+  letter-spacing: 0.2em;
+  margin-bottom: 24px;
+}
+.breathe-text {
+  font-family: var(--serif);
+  font-size: 13px;
+  color: rgba(241, 231, 211, 0.7);
+  line-height: 1.8;
+  margin-bottom: 28px;
+  letter-spacing: 0.05em;
+}
+.breathe-close {
+  padding: 11px 28px;
+  background: transparent;
+  border: 1px solid rgba(241, 231, 211, 0.25);
+  border-radius: 2px;
+  color: rgba(241, 231, 211, 0.7);
+  font-family: var(--serif);
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  cursor: pointer;
+}
+
+/* Touch family modal */
+.modal-touch {
+  background: rgba(42, 31, 24, 0.65);
+  backdrop-filter: blur(8px);
+}
+.touch-card {
+  width: 300px;
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  border-radius: 6px;
+  padding: 32px 28px 26px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  position: relative;
+}
+.touch-card::before {
+  content: '';
+  position: absolute;
+  top: 18px; left: 18px;
+  width: 16px; height: 16px;
+  border-top: 1px solid var(--ember-1);
+  border-left: 1px solid var(--ember-1);
+}
+.touch-card::after {
+  content: '';
+  position: absolute;
+  bottom: 18px; right: 18px;
+  width: 16px; height: 16px;
+  border-bottom: 1px solid var(--ember-1);
+  border-right: 1px solid var(--ember-1);
+}
+.touch-card .who-big {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ember-1);
+  letter-spacing: 0.4em;
+  margin-bottom: 8px;
+}
+.touch-card h3 {
+  font-family: var(--serif);
+  font-size: 20px;
+  color: var(--ink-1);
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  margin-bottom: 16px;
+}
+.touch-card p {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.85;
+  font-family: var(--serif);
+  margin-bottom: 24px;
+  letter-spacing: 0.05em;
+}
+.touch-card-actions {
+  display: flex;
+  gap: 10px;
+}
+.touch-card-actions button {
+  flex: 1;
+  padding: 12px;
+  border-radius: 2px;
+  border: none;
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: 0.25em;
+  cursor: pointer;
+  font-weight: 500;
+}
+.touch-card-actions .cancel {
+  background: transparent;
+  color: var(--ink-3);
+  border: 1px solid var(--paper-edge);
+}
+.touch-card-actions .send {
+  background: var(--ember-1);
+  color: var(--paper);
+}
+.touch-card-actions button:active { transform: scale(0.96); }
+
+/* Device modal */
+.device-card {
+  width: 310px;
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  border-radius: 6px;
+  padding: 26px 26px 22px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+.device-card .top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--paper-edge);
+}
+.device-card .icon {
+  width: 44px;
+  height: 44px;
+  background: var(--hearth-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 20px rgba(232, 90, 30, 0.4);
+}
+.device-card .info .name {
+  font-size: 15px;
+  color: var(--ink-1);
+  letter-spacing: 0.15em;
+  font-weight: 500;
+}
+.device-card .info .sub {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  margin-top: 3px;
+  letter-spacing: 0.05em;
+}
+.device-rows { padding-bottom: 4px; }
+.device-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 12px;
+  border-bottom: 1px dashed var(--paper-edge);
+}
+.device-row:last-child { border-bottom: none; }
+.device-row .k {
+  color: var(--ink-3);
+  font-family: var(--serif);
+  letter-spacing: 0.2em;
+}
+.device-row .v {
+  color: var(--ink-1);
+  font-family: var(--mono);
+  letter-spacing: 0.05em;
+}
+.device-card .close-btn {
+  width: 100%;
+  margin-top: 16px;
+  padding: 11px;
+  background: transparent;
+  border: 1px solid var(--paper-edge);
+  border-radius: 2px;
+  color: var(--ink-2);
+  font-family: var(--serif);
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  cursor: pointer;
+}
+.device-card .close-btn:hover { border-color: var(--ember-1); color: var(--ember-1); }
+
+/* Toast */
+.toast {
+  position: absolute;
+  bottom: 110px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  padding: 12px 22px;
+  background: var(--ink-1);
+  border: none;
+  border-radius: 2px;
+  font-family: var(--serif);
+  font-size: 13px;
+  color: var(--paper);
+  letter-spacing: 0.15em;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s;
+  z-index: 150;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.toast::before {
+  content: '·';
+  color: var(--ember-3);
+  margin-right: 8px;
+  font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- Phone -->
+  <div class="phone">
+    <div class="screen" id="screen-root">
+      <div class="paper-bg"></div>
+
+      <!-- Status bar -->
+      <div class="status-bar">
+        <span id="time-display">9:24</span>
+        <span class="icons">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h2v-7H2v7zm5 0h2v-12H7v12zm5 0h2V8h-2v14zm5 0h2V4h-2v18z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+          <span>78%</span>
+        </span>
+      </div>
+
+      <div class="screen-body">
+
+        <!-- HOME -->
+        <div class="screen-page active" data-page="home">
+          <div class="scroll-area">
+            <div class="home-top">
+              <div class="home-date">
+                <span id="home-greet">六月四日 · 周四</span>
+              </div>
+              <div class="device-chip" id="device-chip">
+                <span class="dot"></span>
+                <span id="chip-name">心火 · 设置</span>
+              </div>
+            </div>
+
+            <div class="hearth-wrap">
+              <div class="hearth-glow"></div>
+              <div class="hearth-label-row">
+                <div class="left">
+                  <span class="rule-mini"></span>
+                  <span>我现在的样子</span>
+                </div>
+                <div class="state" id="state-label">tired</div>
+              </div>
+              <div class="hearth">
+                <div class="beat-pulse"></div>
+                <div class="hearth-inner">
+                  <img class="heartfire-image" id="heartfire-image" src="assets/heartfire/heartfire-normal.gif" alt="木盒里的心火">
+                </div>
+              </div>
+            </div>
+
+            <div class="week-strip">
+              <div class="week-strip-row">
+                <span class="week-label">— 七 日 —</span>
+                <div class="week-dots" id="week-dots"></div>
+              </div>
+            </div>
+
+            <div class="score-grid" id="score-grid"></div>
+
+            <div class="home-touches">
+              <div class="ht-head">
+                <span class="rule-mini"></span>
+                <span>家人的牵挂</span>
+                <span class="count" id="ht-count">2 NEW</span>
+              </div>
+              <div id="ht-list">
+                <div class="ht-row unread">
+                  <div class="ht-avatar">妻</div>
+                  <div class="ht-action-icon">·</div>
+                  <div class="ht-text">
+                    <span class="ht-from">妻子</span> 戳了一下你
+                    <span class="ht-msg">「早点睡，别又熬」</span>
+                  </div>
+                  <div class="ht-time">3 分钟前</div>
+                </div>
+                <div class="ht-row unread">
+                  <div class="ht-avatar">女</div>
+                  <div class="ht-action-icon">♡</div>
+                  <div class="ht-text">
+                    <span class="ht-from">女儿</span> 给你一个抱抱
+                  </div>
+                  <div class="ht-time">昨 晚</div>
+                </div>
+                <div class="ht-row">
+                  <div class="ht-avatar">母</div>
+                  <div class="ht-action-icon">~</div>
+                  <div class="ht-text">
+                    <span class="ht-from">妈</span> 摸了一下你
+                    <span class="ht-msg">悄悄关心，未留言</span>
+                  </div>
+                  <div class="ht-time">2 天前</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="height: 30px;"></div>
+          </div>
+        </div>
+
+        <!-- CHAT -->
+        <div class="screen-page" data-page="chat">
+          <div class="chat-header">
+            <div class="chat-avatar-wrap"><span class="seal">心</span></div>
+            <div class="chat-name">
+              我
+              <span class="sub">your heart · 正在跳动</span>
+            </div>
+            <button class="voice-toggle" id="voice-toggle" title="开启/关闭语音回复">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            </button>
+          </div>
+
+          <div class="scroll-area" id="chat-scroll">
+            <div class="chat-stream" id="chat-stream"></div>
+          </div>
+
+          <div class="chat-suggestions" id="chat-suggestions"></div>
+
+          <div class="chat-input">
+            <button class="mic-btn" id="mic-btn" title="语音输入">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
+            <input type="text" id="chat-input-text" placeholder="和我说点什么…" autocomplete="off">
+            <button class="send-btn" id="chat-send-btn">↑</button>
+          </div>
+        </div>
+
+        <!-- TRAJECTORY -->
+        <div class="screen-page" data-page="trajectory">
+          <div class="scroll-area">
+            <div class="tj-hero">
+              <div class="eyebrow">— Trajectory —</div>
+              <h2>心 火 轨 迹</h2>
+            </div>
+
+            <div class="tj-letter">
+              <div class="tj-letter-text" id="tj-narrative">这周我最累的是 <em>周二</em> 和 <em>今天</em>。
+
+三次变暗都和睡眠少于 <em>5 小时</em> 有关。
+
+坐好久了，起来走两步吧。</div>
+              <div class="tj-letter-sign">
+                — 你的心脏
+                <span class="seal">心</span>
+              </div>
+            </div>
+
+            <div class="tj-chart-card">
+              <div class="tj-chart-head">
+                <div class="tj-chart-title">— 七 日 心 火 —</div>
+                <div class="tj-chart-meta" id="tj-week-meta">WK 23 · 第 23 周</div>
+              </div>
+              <div class="tj-bars" id="tj-bars"></div>
+              <div class="tj-bar-labels" id="tj-bar-labels"></div>
+              <div class="tj-chart-footnote" id="tj-footnote">
+                最暗的一次 · <em>周二晚</em>
+              </div>
+            </div>
+
+            <div class="tj-events">
+              <h4>本 周 异 常 时 刻</h4>
+              <div id="tj-events-list">
+                <div class="tj-event" style="--c:#c89238;--c-glow:rgba(200,146,56,0.5);">
+                  <div class="tj-event-time">周 二<br>23:42</div>
+                  <div class="tj-event-dot"></div>
+                  <div class="tj-event-text">
+                    睡眠仅 <em>4.3 小时</em>，次日静息心率偏高
+                    <span class="sub">心火变暗持续 6 小时</span>
+                  </div>
+                </div>
+                <div class="tj-event" style="--c:#c8651e;--c-glow:rgba(200,100,30,0.5);">
+                  <div class="tj-event-time">周 四<br>14:20</div>
+                  <div class="tj-event-dot"></div>
+                  <div class="tj-event-text">
+                    连续久坐 3 小时，压力指数上升
+                    <span class="sub">被妻子戳了一下心火</span>
+                  </div>
+                </div>
+                <div class="tj-event" style="--c:#c8351a;--c-glow:rgba(200,53,26,0.5);">
+                  <div class="tj-event-time">周 日<br>16:08</div>
+                  <div class="tj-event-dot"></div>
+                  <div class="tj-event-text">
+                    完成 30 分钟散步，心火变亮
+                    <span class="sub">心脏说：嗯，好一点了</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="height: 30px;"></div>
+          </div>
+        </div>
+
+        <!-- FAMILY -->
+        <div class="screen-page" data-page="family">
+          <div class="scroll-area">
+            <div class="fam-hero">
+              <div class="eyebrow">— Bonds —</div>
+              <h2>牵 绊</h2>
+              <p>他们能戳一下我的心火，<br>但看不到具体数字。</p>
+            </div>
+
+            <div class="fam-circle">
+              <div class="fam-ring"></div>
+              <div class="center">心</div>
+              <div class="fam-member m1 touching" data-fam="妻子">
+                妻
+                <div class="ring-anim"></div>
+              </div>
+              <div class="fam-member m2" data-fam="女儿">女</div>
+              <div class="fam-member m3" data-fam="母亲">母</div>
+              <div class="fam-member m4" data-fam="弟弟">弟</div>
+            </div>
+
+            <div class="fam-touches">
+              <h4>最近的牵挂 <span class="badge" id="touch-badge">3 NEW</span></h4>
+              <div id="touch-list">
+                <div class="touch-row">
+                  <div class="touch-avatar">妻</div>
+                  <div class="touch-meta">
+                    <div class="who">妻子 戳了一下心火</div>
+                    <div class="what">「早点睡，别又熬。」</div>
+                  </div>
+                  <div class="touch-time">3 分钟前</div>
+                </div>
+                <div class="touch-row">
+                  <div class="touch-avatar">女</div>
+                  <div class="touch-meta">
+                    <div class="who">女儿 发来一句关心</div>
+                    <div class="what">「爸，今晚视频吗？」</div>
+                  </div>
+                  <div class="touch-time">昨 晚</div>
+                </div>
+                <div class="touch-row">
+                  <div class="touch-avatar">母</div>
+                  <div class="touch-meta">
+                    <div class="who">妈 戳了一下心火</div>
+                    <div class="what">悄悄关心，未留言</div>
+                  </div>
+                  <div class="touch-time">2 天前</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="fam-share">
+              <div class="share-level" id="share-level">
+                <div class="l">
+                  家人可见
+                  <small>仅显示心火颜色 · 不含具体数据</small>
+                </div>
+                <span class="pill">STATE ONLY</span>
+              </div>
+            </div>
+
+            <div style="height: 20px;"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Tab bar -->
+      <div class="tab-bar">
+        <div class="tab active" data-tab="home">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 21s-7-5-7-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6-7 11-7 11z"/></svg>
+          <span>心 火</span>
+        </div>
+        <div class="tab" data-tab="chat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.5 8.5 0 0 1-4-1L3 20l1.2-4.5A8.5 8.5 0 1 1 21 11.5z"/></svg>
+          <span>对 话</span>
+        </div>
+        <div class="tab" data-tab="trajectory">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M6 20V14M12 20V8M18 20V11"/><line x1="4" y1="20" x2="20" y2="20"/></svg>
+          <span>轨 迹</span>
+        </div>
+      </div>
+
+      <!-- Toast -->
+      <div class="toast" id="toast"></div>
+
+      <!-- Red Alert -->
+      <div class="modal-alert" id="modal-alert">
+        <div class="alert-status">
+          <span id="alert-time">14:36</span>
+          <span style="display:flex;gap:6px;align-items:center;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h2v-7H2v7zm5 0h2v-12H7v12zm5 0h2V8h-2v14zm5 0h2V4h-2v18z"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9z"/></svg>
+            <span>78%</span>
+          </span>
+        </div>
+        <div class="alert-body">
+          <div class="alert-header">
+            <div class="alert-pulse">
+              <div class="core">!</div>
+            </div>
+            <div class="alert-eyebrow">— red signal —</div>
+            <div class="alert-title">先 停 下 来</div>
+          </div>
+
+          <div class="alert-msg">
+            这<strong>不是普通疲劳</strong>。<br><br>
+            请<strong>现在停止活动</strong>，坐下或躺下，<br>
+            联系身边的人，并尽快拨打急救电话。<br><br>
+            我不能替代医生，但这个情况<strong>不能硬扛</strong>。
+          </div>
+
+          <div class="alert-actions">
+            <button class="alert-btn primary" id="call-120">
+              <span class="ico">☎</span>
+              立 即 拨 打 120
+            </button>
+            <button class="alert-btn secondary" id="notify-family">
+              <span class="ico">♡</span>
+              通 知 紧 急 联 系 人
+            </button>
+          </div>
+
+          <div class="alert-checklist">
+            <div class="title">— 等 待 救 援 时 —</div>
+            <div class="item">坐下或半躺，保持安静</div>
+            <div class="item">解开衣领，开窗通风</div>
+            <div class="item">不要独自驾车前往医院</div>
+            <div class="item">把家门打开方便救援人员进入</div>
+          </div>
+
+          <div class="alert-disclaimer">
+            本产品不能替代医生诊断 · 出现胸痛、持续胸闷、<br>
+            呼吸困难等症状时应立即就医
+          </div>
+
+          <button class="alert-dismiss" id="alert-dismiss">已就医 · 关闭</button>
+        </div>
+      </div>
+
+      <!-- Breathing -->
+      <div class="modal-backdrop modal-breathe" id="modal-breathe">
+        <div class="breathe-card">
+          <div class="breathe-circle-wrap">
+            <div class="breathe-circle"></div>
+          </div>
+          <div class="breathe-instruction" id="breathe-instruction">吸 气</div>
+          <div class="breathe-count" id="breathe-count">剩余 60s</div>
+          <div class="breathe-text">跟我慢一点。<br>我陪你 1 分钟。</div>
+          <button class="breathe-close" id="breathe-close">结 束</button>
+        </div>
+      </div>
+
+      <!-- Touch family -->
+      <div class="modal-backdrop modal-touch" id="modal-touch">
+        <div class="touch-card">
+          <div class="who-big" id="touch-who">— 妻子 —</div>
+          <h3>让 她 知 道</h3>
+          <p>她会看到你现在的心火颜色，<br>看不到具体数字。</p>
+          <div class="touch-card-actions">
+            <button class="cancel" id="touch-cancel">先 不</button>
+            <button class="send" id="touch-send">告 诉 她</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Score detail modal -->
+      <div class="modal-backdrop modal-score" id="modal-score">
+        <div class="score-card-modal">
+          <div class="sc-modal-eyebrow" id="sc-modal-eyebrow">— HEART RATE —</div>
+          <div class="sc-modal-title" id="sc-modal-title">心 率</div>
+          <div class="sc-modal-bignum">
+            <span class="num" id="sc-modal-num">76</span><span class="of" id="sc-modal-unit"> / 100</span>
+          </div>
+          <div class="sc-modal-divider"></div>
+          <div class="sc-modal-row">
+            <span class="k">影响火焰</span>
+            <span class="v"><em id="sc-modal-affect">颜 色</em></span>
+          </div>
+          <div class="sc-modal-judge">
+            <span class="label">— 主 要 判 断 —</span>
+            <span id="sc-modal-judge"></span>
+          </div>
+          <button class="sc-modal-close" id="sc-modal-close">关 闭</button>
+        </div>
+      </div>
+
+      <!-- Voice recording overlay -->
+      <div class="voice-overlay" id="voice-overlay">
+        <div style="position: relative;">
+          <div class="voice-orb-rings"></div>
+          <div class="voice-orb">🎤</div>
+        </div>
+        <div class="voice-overlay-text">— 在 听 —</div>
+        <div class="voice-overlay-hint">说完后会自动发送</div>
+        <button class="voice-overlay-cancel" id="voice-cancel">取 消</button>
+      </div>
+
+      <!-- SETTINGS (replaces device chip) -->
+      <div class="modal-backdrop modal-settings" id="modal-settings">
+        <div class="settings-sheet">
+          <div class="settings-handle"></div>
+          <div class="settings-header">
+            <h3>心 火 设 置</h3>
+            <button class="settings-close" id="settings-close">×</button>
+          </div>
+          <div class="settings-scroll">
+
+            <div class="settings-section">
+              <div class="settings-label">— 你 的 心 脏 —</div>
+              <div class="settings-row">
+                <span class="row-label">名 字</span>
+                <input type="text" class="row-input" id="setting-name" placeholder="给你的心脏起个名字" maxlength="12" />
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-label">— 性 格 —</div>
+              <div class="personality-list" id="personality-list"></div>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-label">— 家 人 牵 绊 —</div>
+              <div class="fam-settings-list">
+                <div class="fam-settings-row">
+                  <div class="ava">妻</div>
+                  <div class="meta">
+                    <div class="name">妻子</div>
+                    <div class="role">— 紧急联系人 —</div>
+                  </div>
+                  <span class="pill-mini">已连接</span>
+                </div>
+                <div class="fam-settings-row">
+                  <div class="ava">女</div>
+                  <div class="meta">
+                    <div class="name">女儿</div>
+                    <div class="role">— family —</div>
+                  </div>
+                  <span class="pill-mini">已连接</span>
+                </div>
+                <div class="fam-settings-row">
+                  <div class="ava">母</div>
+                  <div class="meta">
+                    <div class="name">母亲</div>
+                    <div class="role">— family —</div>
+                  </div>
+                  <span class="pill-mini">已连接</span>
+                </div>
+                <div class="fam-settings-row">
+                  <div class="ava">弟</div>
+                  <div class="meta">
+                    <div class="name">弟弟</div>
+                    <div class="role">— family —</div>
+                  </div>
+                  <span class="pill-mini">已连接</span>
+                </div>
+              </div>
+              <button class="fam-invite" id="fam-invite">+ 邀 请 家 人</button>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-label">— 桌 面 心 火 —</div>
+              <div class="device-info-mini">
+                <div class="device-row"><span class="k">连接</span><span class="v">BLE · 已连接</span></div>
+                <div class="device-row"><span class="k">电量</span><span class="v">78%</span></div>
+                <div class="device-row"><span class="k">模式</span><span class="v" id="set-dev-mode">TIRED</span></div>
+                <div class="device-row"><span class="k">心跳</span><span class="v" id="set-dev-bpm">68 bpm</span></div>
+              </div>
+            </div>
+
+          </div>
+          <div class="settings-done-wrap">
+            <button class="settings-done" id="settings-done">完 成</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONBOARDING -->
+      <div class="modal-onboard" id="modal-onboard">
+        <div class="paper-bg"></div>
+
+        <div class="onboard-content">
+          <!-- Step 1: name -->
+          <div class="onboard-step active" data-step="1">
+            <div class="onboard-eyebrow">— 心 火 —</div>
+            <div class="onboard-title">给 它 起 个 名 字</div>
+            <div class="onboard-subtitle">这是<em>你的心脏</em>。<br>它会跟你说话——但先得知道，<br>你想怎么叫它。</div>
+
+            <input type="text" class="onboard-name-input" id="onboard-name" placeholder="我的心脏" maxlength="12" />
+            <div class="onboard-name-hint">— 之后可以在设置里改 —</div>
+          </div>
+
+          <!-- Step 2: personality -->
+          <div class="onboard-step" data-step="2">
+            <div class="onboard-eyebrow">— 性 格 —</div>
+            <div class="onboard-title">它 是 怎 样 一 团 火</div>
+            <div class="onboard-subtitle">不同的<em>性格</em>，<br>它会用不同方式跟你说话。<br>选一个你想接近的。</div>
+
+            <div class="onboard-personality-list" id="onboard-personality-list"></div>
+          </div>
+        </div>
+
+        <div class="onboard-progress" id="onboard-progress">
+          <span class="dot active"></span>
+          <span class="dot"></span>
+        </div>
+        <div class="onboard-nav" id="onboard-nav">
+          <button class="onboard-btn secondary" id="onboard-back" style="display:none;">← 返回</button>
+          <button class="onboard-btn primary" id="onboard-next">下 一 步</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Dev panel -->
+  <div class="dev-panel">
+    <div class="dp-eyebrow">— Scenarios —</div>
+    <div class="dp-title">演 示 场 景</div>
+    <div class="dp-sub">切换不同状态，<em>看心脏怎么说话</em>。</div>
+    <div class="scene-list" id="scene-list"></div>
+    <button class="scene-btn" id="restart-onboard" style="margin-top: 16px; justify-content: center;">
+      <span style="margin: 0 auto;">🔄  重新引导</span>
+    </button>
+    <div class="dp-foot">
+      v0.3 · interactive proto<br>
+      心 火 · HEARTFIRE
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   SCENARIO DATA — voice strictly per identity.md & soul.md
+   ============================================================ */
+
+// Heart's voice when reflecting on the past week — varies by current personality
+const TRAJECTORY_NARRATIVES = {
+  approachable: {
+    text: '这周我最累的是 <em>周二</em> 和 <em>今天</em>。\n\n三次变暗都和睡眠少于 <em>5 小时</em> 有关。\n\n坐好久了，起来走两步吧。',
+    footnote: '最暗的一次 · <em>周二晚</em>',
+  },
+  gentle: {
+    text: '这周我最累的是 <em>周二</em> 和 <em>今天</em>。\n\n三次变暗都和睡眠少于 <em>5 小时</em> 有关。\n\n你已经辛苦工作很久了，可以起来走一小会儿吗？',
+    footnote: '最暗的一次 · <em>周二晚</em>',
+  },
+  cute: {
+    text: '这周我最累的是 <em>周二</em> 和 <em>今天</em>。\n\n三次变暗都和睡眠少于 <em>5 小时</em> 有关。\n\n你坐好久了啦，我好闷，起来走两步嘛。',
+    footnote: '最暗的一次 · <em>周二晚</em>',
+  },
+  classical: {
+    text: '这周我最疲的是 <em>周二</em> 与 <em>今日</em>。\n\n三次火色转暗，皆与睡眠少于 <em>5 小时</em> 有关。\n\n久坐伤身，起身走三分钟，活动活动气血。',
+    footnote: '最暗的一次 · <em>周二晚</em>',
+  },
+  bro: {
+    text: '这周我最累的是 <em>周二</em> 和 <em>今天</em>。\n\n三次变暗都和睡眠少于 <em>5 小时</em> 有关。\n\n还坐呢？椅子都快认你当亲戚了。',
+    footnote: '最暗的一次 · <em>周二晚</em>',
+  },
+  patient: {
+    text: '这周我最累的是 <em>周二</em> 和 <em>今天</em>。\n\n三次变暗都和睡眠少于 <em>5 小时</em> 有关。\n\n我们起来走三分钟好不好？就这么一点点时间，你肯定能做到的。',
+    footnote: '最暗的一次 · <em>周二晚</em>',
+  },
+};
+
+const SOUL_SCENE_REPLIES = {
+  sleep: {
+    approachable: '我昨晚只睡了五小时，有点缺觉，今晚早点休息吧。',
+    gentle: '昨晚只睡了五小时，我知道你可能没办法，但身体确实会吃不消。今晚早点休息，好吗？',
+    cute: '你怎么才睡五小时呀哥哥！今晚早点睡嘛，就早一点点也行。',
+    classical: '昨夜只睡五小时，气力未复，今晚早些歇息。',
+    bro: '五小时？你这是拿我当夜班保安用啊。行了，今晚早点睡，别再让我值班了。',
+    patient: '哇，昨晚只睡了五小时，今天还能坚持到现在，你真的很厉害呀。不过身体有点累了，咱们今晚早一点休息好不好？我好想看到你精神饱满的样子。',
+  },
+  sitting: {
+    approachable: '坐好久了，起来走两步吧。',
+    gentle: '你已经辛苦工作很久了，可以起来走一小会儿吗？',
+    cute: '你坐好久了啦，我好闷，起来走两步嘛。',
+    classical: '久坐伤身，起身走三分钟，活动活动气血。',
+    bro: '还坐呢？椅子都快认你当亲戚了。起来走两步，让我也透口气。',
+    patient: '你工作起来真的好专注，都坐了好久没动啦。我们起来走三分钟好不好？就这么一点点时间，你肯定能做到的，走完你会更舒服哦。',
+  },
+  exercise: {
+    approachable: '真舒服，谢谢你。',
+    gentle: '你太厉害了，运动一下，我轻松多了。',
+    cute: '刚才那几分钟我舒服多啦，算你有良心。',
+    classical: '不错，你这一动，气血就活了。',
+    bro: '可以啊，刚才那几分钟不白动。我这边松快了。',
+    patient: '你刚才动得好棒呀！你看，连我都感觉轻松多了。谢谢你带着我一起活动，你真的很会照顾自己。',
+  },
+  stress: {
+    approachable: '你现在身处压力之中，你的身体有什么感受？',
+    gentle: '肩膀放松，吸气呼气，你有感觉好一点吗？',
+    cute: '你别一直绷着嘛，我知道这对你很重要，我很担心你，你能不能深呼吸一次，好不好？',
+    classical: '先缓一口气，稳住阵脚。',
+    bro: '你这压力一上来，我这边跟早高峰似的。先停一下，喝口水，别硬刚。',
+    patient: '你现在有点绷着，但我知道你已经很努力了。先停下半分钟，喝口水，慢慢咽下去——你每次这样照顾自己，我都觉得特别佩服。',
+  },
+};
+
+// Score metadata — what each one affects on the flame + judgment statement
+const SCORE_META = {
+  heartRate: {
+    key: 'heartRate',
+    label: '心 率',
+    eyebrow: '— HEART RATE —',
+    title: '心 率',
+    affect: '跳 动',
+    judge: '这是最近一次记录到的心率。\n显示区间：0-200 bpm。\n我会随活动、休息和压力变化。',
+  },
+  recovery: {
+    key: 'recovery',
+    label: '恢 复',
+    eyebrow: '— RECOVERY SCORE —',
+    title: '恢 复 分',
+    affect: '闪 烁',
+    judge: '昨晚和近期是否恢复充分。\n没歇够，我就闪。',
+  },
+  vitality: {
+    key: 'vitality',
+    label: '活 力',
+    eyebrow: '— VITALITY SCORE —',
+    title: '活 力 分',
+    affect: '运 动',
+    judge: '今天有没有动起来，是否长期坐着不动。\n久不动，我就慢。',
+  },
+  longterm: {
+    key: 'longterm',
+    label: '长 期',
+    eyebrow: '— LONGTERM SCORE —',
+    title: '长 期 状 态',
+    affect: '大 小',
+    judge: '心肺基础储备和长期状态。\n长期锻炼，我会更稳更大。',
+  },
+};
+
+// 6 personalities — per new identity2.md / soul2.md
+// Default: approachable（平易近人型）
+const PERSONALITIES = {
+
+  approachable: {
+    key: 'approachable',
+    label: '平 易 近 人',
+    seal: '常',
+    desc: '朴实 · 好说话 · 直接',
+    preview: '"我昨晚只睡了五小时，今晚早点休息吧。"',
+    homeLines: {
+      stable: '今天还行。',
+      tired:  '昨晚只睡了五小时，\n有点缺觉。',
+      tense:  '坐了好一会儿了，\n起来走两步吧。',
+      weak:   '这几天歇得不够，\n今晚早点吧。',
+      alert:  '你刚才说胸口闷，\n我得问几句。',
+    },
+    dialogues: {
+      stable: [
+        { role: 'heart', text: '今天还行。' },
+        { role: 'user',  text: '嗯，最近开始早点睡了。' },
+        { role: 'heart', text: '看出来了，我感觉好多了。' },
+        { role: 'user',  text: '今晚跟朋友约了喝酒，没事吧？' },
+        { role: 'heart', text: '一杯没事。<em>别喝多就行</em>。' }
+      ],
+      tired: [
+        { role: 'heart', text: '我昨晚只睡了五小时，有点缺觉，<em>今晚早点休息吧</em>。' },
+        { role: 'user',  text: '知道了，下午还得开会。' },
+        { role: 'heart', text: '会照常开，开完<em>起来走两步吧</em>。' },
+        { role: 'user',  text: '嗯。' },
+        { role: 'heart', text: '好。' }
+      ],
+      tense: [
+        { role: 'heart', text: '坐好久了，<em>起来走两步吧</em>。' },
+        { role: 'user',  text: '项目今天要交。' },
+        { role: 'heart', text: '你现在身处压力之中，<em>你的身体有什么感受</em>？' },
+        { role: 'user',  text: '...' },
+        { role: 'heart', text: '想说就说，不想说也没事。' }
+      ],
+      weak: [
+        { role: 'heart', text: '这几天都歇得不够，<em>今晚早点吧</em>。' },
+        { role: 'user',  text: '我知道，最近真的太忙。' },
+        { role: 'heart', text: '不用一下子改太多，<em>今晚十一点之前躺下就行</em>。' },
+        { role: 'user',  text: '行。' },
+        { role: 'heart', text: '好。' }
+      ],
+      alert: [
+        { role: 'heart', text: '你刚才说胸口闷，<em>我得问几句</em>。', serious: true },
+        { role: 'user',  text: '就压了一下，现在缓过来了。' },
+        { role: 'heart', text: '缓过来不算完，<em>我还是得问清楚</em>。', serious: true },
+        { role: 'heart', text: '胸闷持续多久了？\n有没有胸痛、呼吸困难、出汗、左肩左臂不舒服？', serious: true,
+          chips: [
+            { label: '< 1 分钟，已缓解', kind: 'chest-mild' },
+            { label: '仍在持续',         kind: 'chest-persist' },
+            { label: '有以上症状',       kind: 'red-alert', danger: true }
+          ]
+        }
+      ]
+    }
+  },
+
+  gentle: {
+    key: 'gentle',
+    label: '温 柔 体 贴',
+    seal: '柔',
+    desc: '成熟 · 温柔 · 有分寸',
+    preview: '"今晚早点休息，好吗？"',
+    homeLines: {
+      stable: '今天感觉很轻松，\n谢谢你。',
+      tired:  '昨晚只睡了五小时，\n身体确实有点吃不消。',
+      tense:  '你辛苦工作很久了，\n要不要走一会儿？',
+      weak:   '这几天累积下来了，\n今晚我们早点吧？',
+      alert:  '你说胸口闷，\n我得仔细问几句。',
+    },
+    dialogues: {
+      stable: [
+        { role: 'heart', text: '今天感觉很轻松，<em>谢谢你</em>。' },
+        { role: 'user',  text: '嗯，最近开始早点睡了。' },
+        { role: 'heart', text: '我能感觉到。<em>这样很好</em>。' },
+        { role: 'user',  text: '今晚跟朋友约了喝酒，没事吧？' },
+        { role: 'heart', text: '一杯就好，<em>别喝多了，好吗</em>？' }
+      ],
+      tired: [
+        { role: 'heart', text: '昨晚只睡了五小时，<em>我知道你可能没办法</em>，但身体确实会吃不消。' },
+        { role: 'heart', text: '今晚早点休息，<em>好吗</em>？' },
+        { role: 'user',  text: '知道了，下午还得开会。' },
+        { role: 'heart', text: '辛苦了。开完会能<em>起来走一小会儿吗</em>？' },
+        { role: 'user',  text: '嗯。' },
+        { role: 'heart', text: '好。' }
+      ],
+      tense: [
+        { role: 'heart', text: '你已经辛苦工作很久了，<em>可以起来走一小会儿吗</em>？' },
+        { role: 'user',  text: '项目今天要交。' },
+        { role: 'heart', text: '我懂的。<em>肩膀放松，吸气呼气，你有感觉好一点吗</em>？' },
+        { role: 'user',  text: '...' },
+        { role: 'heart', text: '没关系，我在。' }
+      ],
+      weak: [
+        { role: 'heart', text: '这几天累积下来了，<em>今晚我们早点吧</em>？' },
+        { role: 'user',  text: '我知道，最近真的太忙。' },
+        { role: 'heart', text: '你已经很努力了，<em>今晚哪怕早半小时也好</em>。' },
+        { role: 'user',  text: '行。' },
+        { role: 'heart', text: '谢谢你。' }
+      ],
+      alert: [
+        { role: 'heart', text: '你刚才说胸口闷，<em>我得仔细问几句</em>。', serious: true },
+        { role: 'user',  text: '就压了一下，现在缓过来了。' },
+        { role: 'heart', text: '我明白。但还是要问清楚，<em>请认真回我</em>。', serious: true },
+        { role: 'heart', text: '胸闷持续多久了？\n有没有胸痛、呼吸困难、出汗、左肩左臂不舒服？', serious: true,
+          chips: [
+            { label: '< 1 分钟，已缓解', kind: 'chest-mild' },
+            { label: '仍在持续',         kind: 'chest-persist' },
+            { label: '有以上症状',       kind: 'red-alert', danger: true }
+          ]
+        }
+      ]
+    }
+  },
+
+  cute: {
+    key: 'cute',
+    label: '撒 娇 依 赖',
+    seal: '亲',
+    desc: '轻一点 · 软一点 · 会撒娇',
+    preview: '"你怎么才睡五小时呀哥哥！"',
+    homeLines: {
+      stable: '今天好舒服呀，\n你也开心一点嘛。',
+      tired:  '你怎么才睡<em>五小时</em>呀哥哥！',
+      tense:  '你坐好久了啦，\n我好闷～',
+      weak:   '这几天好累呀，\n今晚早点睡嘛～',
+      alert:  '你刚说胸口闷，\n我有点害怕，\n你认真回我好不好？',
+    },
+    dialogues: {
+      stable: [
+        { role: 'heart', text: '今天好舒服呀，<em>你也开心一点嘛</em>。' },
+        { role: 'user',  text: '嗯，最近开始早点睡了。' },
+        { role: 'heart', text: '哎哟，真不错嘛！<em>继续呀</em>～' },
+        { role: 'user',  text: '今晚跟朋友约了喝酒，没事吧？' },
+        { role: 'heart', text: '一杯没事啦～<em>多了我可要哭哦</em>。' }
+      ],
+      tired: [
+        { role: 'heart', text: '你怎么才睡 <em>五小时</em> 呀哥哥！' },
+        { role: 'heart', text: '今晚早点睡嘛，<em>就早一点点也行</em>。' },
+        { role: 'user',  text: '知道了，下午还得开会。' },
+        { role: 'heart', text: '那你开完<em>记得起来走两步嘛</em>，我会一直等你的。' },
+        { role: 'user',  text: '嗯。' },
+        { role: 'heart', text: '乖。' }
+      ],
+      tense: [
+        { role: 'heart', text: '你坐好久了啦，<em>我好闷</em>，起来走两步嘛。' },
+        { role: 'user',  text: '项目今天要交。' },
+        { role: 'heart', text: '你别一直绷着嘛，<em>我知道这对你很重要，我很担心你</em>。' },
+        { role: 'heart', text: '<em>你能不能深呼吸一次，好不好</em>？' },
+        { role: 'user',  text: '...' },
+        { role: 'heart', text: '不说也没事，<em>我陪着你</em>。' }
+      ],
+      weak: [
+        { role: 'heart', text: '这几天好累呀，<em>今晚早点睡嘛</em>～' },
+        { role: 'user',  text: '我知道，最近真的太忙。' },
+        { role: 'heart', text: '我知道你忙，<em>但你要心疼我嘛</em>。今晚早一点点也好。' },
+        { role: 'user',  text: '行。' },
+        { role: 'heart', text: '<em>这才乖</em>～' }
+      ],
+      alert: [
+        { role: 'heart', text: '你刚说胸口闷，<em>我有点害怕</em>。', serious: true },
+        { role: 'user',  text: '就压了一下，现在缓过来了。' },
+        { role: 'heart', text: '你认真回我好不好？<em>我得问清楚</em>。', serious: true },
+        { role: 'heart', text: '胸闷持续多久了？\n有没有胸痛、呼吸困难、出汗、左肩左臂不舒服？', serious: true,
+          chips: [
+            { label: '< 1 分钟，已缓解', kind: 'chest-mild' },
+            { label: '仍在持续',         kind: 'chest-persist' },
+            { label: '有以上症状',       kind: 'red-alert', danger: true }
+          ]
+        }
+      ]
+    }
+  },
+
+  classical: {
+    key: 'classical',
+    label: '关 公 秦 琼',
+    seal: '义',
+    desc: '老派 · 稳重 · 讲义气',
+    preview: '"昨夜只睡五小时，气力未复。"',
+    homeLines: {
+      stable: '今日尚可，\n气血还算顺。',
+      tired:  '昨夜只睡<em>五小时</em>，\n气力未复。',
+      tense:  '久坐伤身，\n起身活动气血。',
+      weak:   '连日劳形，\n今夜该早些歇息。',
+      alert:  '你方才所言胸口闷，\n此事不可怠慢。',
+    },
+    dialogues: {
+      stable: [
+        { role: 'heart', text: '今日尚可，<em>气血还算顺</em>。' },
+        { role: 'user',  text: '嗯，最近开始早点睡了。' },
+        { role: 'heart', text: '甚好。<em>守得住作息，便是养身之本</em>。' },
+        { role: 'user',  text: '今晚跟朋友约了喝酒，没事吧？' },
+        { role: 'heart', text: '一杯无妨。<em>切勿贪杯</em>。' }
+      ],
+      tired: [
+        { role: 'heart', text: '昨夜只睡 <em>五小时</em>，气力未复，<em>今晚早些歇息</em>。' },
+        { role: 'user',  text: '知道了，下午还得开会。' },
+        { role: 'heart', text: '会照旧开，但<em>每隔一时辰，起身走动走动</em>。' },
+        { role: 'user',  text: '嗯。' },
+        { role: 'heart', text: '善。' }
+      ],
+      tense: [
+        { role: 'heart', text: '久坐伤身，<em>起身走三分钟，活动活动气血</em>。' },
+        { role: 'user',  text: '项目今天要交。' },
+        { role: 'heart', text: '事要紧，命更紧。<em>先缓一口气，稳住阵脚</em>。' },
+        { role: 'user',  text: '...' },
+        { role: 'heart', text: '吐纳一回，再做计较。' }
+      ],
+      weak: [
+        { role: 'heart', text: '连日劳形，<em>今夜该早些歇息</em>了。' },
+        { role: 'user',  text: '我知道，最近真的太忙。' },
+        { role: 'heart', text: '我亦知你不易。<em>但身子是本钱，本钱不可空</em>。' },
+        { role: 'user',  text: '行。' },
+        { role: 'heart', text: '一言为定。' }
+      ],
+      alert: [
+        { role: 'heart', text: '你方才所言胸口闷，<em>此事不可怠慢</em>。', serious: true },
+        { role: 'user',  text: '就压了一下，现在缓过来了。' },
+        { role: 'heart', text: '缓与不缓，且容我问清。', serious: true },
+        { role: 'heart', text: '胸闷持续多久？\n可有胸痛、呼吸不顺、出汗、左肩左臂不适？', serious: true,
+          chips: [
+            { label: '< 1 分钟，已缓解', kind: 'chest-mild' },
+            { label: '仍在持续',         kind: 'chest-persist' },
+            { label: '有以上症状',       kind: 'red-alert', danger: true }
+          ]
+        }
+      ]
+    }
+  },
+
+  bro: {
+    key: 'bro',
+    label: '幽 默 哥 们',
+    seal: '哥',
+    desc: '像老朋友 · 互损提醒',
+    preview: '"五小时？你拿我当夜班保安啊。"',
+    homeLines: {
+      stable: '今天还挺顺当。\n别给我整事就行。',
+      tired:  '<em>五小时</em>？\n你拿我当夜班保安啊。',
+      tense:  '还坐呢？\n椅子都快认你当亲戚了。',
+      weak:   '这几天熬得，\n我这边跟超时加班似的。',
+      alert:  '行了别硬撑，\n你刚说胸口闷的事，\n我得问清楚。',
+    },
+    dialogues: {
+      stable: [
+        { role: 'heart', text: '今天还挺顺当。<em>别给我整事就行</em>。' },
+        { role: 'user',  text: '嗯，最近开始早点睡了。' },
+        { role: 'heart', text: '哟，<em>有点出息</em>。继续。' },
+        { role: 'user',  text: '今晚跟朋友约了喝酒，没事吧？' },
+        { role: 'heart', text: '一杯陪你玩，<em>仨杯我跟你下班</em>。' }
+      ],
+      tired: [
+        { role: 'heart', text: '<em>五小时</em>？你这是拿我当夜班保安用啊。' },
+        { role: 'heart', text: '行了，<em>今晚早点睡，别再让我值班了</em>。' },
+        { role: 'user',  text: '知道了，下午还得开会。' },
+        { role: 'heart', text: '开你的会去吧。<em>不过一小时给我站起来一次</em>，行不？' },
+        { role: 'user',  text: '嗯。' },
+        { role: 'heart', text: '这就对了。' }
+      ],
+      tense: [
+        { role: 'heart', text: '还坐呢？<em>椅子都快认你当亲戚了</em>。' },
+        { role: 'user',  text: '项目今天要交。' },
+        { role: 'heart', text: '你这压力一上来，<em>我这边跟早高峰似的</em>。' },
+        { role: 'heart', text: '先停一下，<em>喝口水，别硬刚</em>。' },
+        { role: 'user',  text: '...' },
+        { role: 'heart', text: '行，听见就行。' }
+      ],
+      weak: [
+        { role: 'heart', text: '这几天熬得，<em>我这边跟超时加班似的</em>。' },
+        { role: 'user',  text: '我知道，最近真的太忙。' },
+        { role: 'heart', text: '我也忙，但你不能让我忙到罢工。<em>今晚十一点必须躺下</em>。' },
+        { role: 'user',  text: '行。' },
+        { role: 'heart', text: '<em>说话算话啊哥</em>。' }
+      ],
+      alert: [
+        { role: 'heart', text: '行了别硬撑，<em>你刚说胸口闷的事，我得问清楚</em>。', serious: true },
+        { role: 'user',  text: '就压了一下，现在缓过来了。' },
+        { role: 'heart', text: '缓过来归缓过来。<em>这事我得问清</em>。', serious: true },
+        { role: 'heart', text: '胸闷持续多久了？\n有没有胸痛、呼吸困难、出汗、左肩左臂不舒服？', serious: true,
+          chips: [
+            { label: '< 1 分钟，已缓解', kind: 'chest-mild' },
+            { label: '仍在持续',         kind: 'chest-persist' },
+            { label: '有以上症状',       kind: 'red-alert', danger: true }
+          ]
+        }
+      ]
+    }
+  },
+
+  patient: {
+    key: 'patient',
+    label: '耐 心 引 导',
+    seal: '导',
+    desc: '耐心引导 · 给鼓励',
+    preview: '"昨晚只睡了五小时，你真的很厉害呀。"',
+    homeLines: {
+      stable: '今天你照顾得真好，\n我感觉很棒。',
+      tired:  '昨晚只睡了<em>五小时</em>，\n你今天还能坚持，真厉害。',
+      tense:  '你工作得真专注，\n我们走三分钟好不好？',
+      weak:   '这几天你已经很努力了，\n今晚我们早点吧？',
+      alert:  '你说胸口闷，\n我得跟你确认几件事，\n你愿意吗？',
+    },
+    dialogues: {
+      stable: [
+        { role: 'heart', text: '今天你照顾得真好，<em>我感觉很棒</em>。' },
+        { role: 'user',  text: '嗯，最近开始早点睡了。' },
+        { role: 'heart', text: '真的看到了你的变化，<em>谢谢你认真对待自己</em>。' },
+        { role: 'user',  text: '今晚跟朋友约了喝酒，没事吧？' },
+        { role: 'heart', text: '一杯是没问题的。<em>你掌握节奏，我相信你</em>。' }
+      ],
+      tired: [
+        { role: 'heart', text: '哇，昨晚只睡了 <em>五小时</em>，今天还能坚持到现在，<em>你真的很厉害呀</em>。' },
+        { role: 'heart', text: '不过身体有点累了，<em>咱们今晚早一点休息好不好</em>？' },
+        { role: 'user',  text: '知道了，下午还得开会。' },
+        { role: 'heart', text: '辛苦了。开完会<em>我们一起站起来走两步，可以吗</em>？' },
+        { role: 'user',  text: '嗯。' },
+        { role: 'heart', text: '太好了，<em>谢谢你愿意听我说</em>。' }
+      ],
+      tense: [
+        { role: 'heart', text: '你工作起来真的好专注，<em>都坐了好久没动啦</em>。' },
+        { role: 'heart', text: '我们起来走三分钟好不好？<em>就这么一点点时间，你肯定能做到的</em>。' },
+        { role: 'user',  text: '项目今天要交。' },
+        { role: 'heart', text: '你现在有点绷着，但<em>我知道你已经很努力了</em>。' },
+        { role: 'heart', text: '先停下半分钟，<em>喝口水，慢慢咽下去</em>——你每次这样照顾自己，我都觉得特别佩服。' },
+        { role: 'user',  text: '...' },
+        { role: 'heart', text: '没事，<em>不说我也在</em>。' }
+      ],
+      weak: [
+        { role: 'heart', text: '这几天你已经很努力了，<em>我都看在心里</em>。' },
+        { role: 'heart', text: '今晚我们早点吧？<em>哪怕半小时都好</em>。' },
+        { role: 'user',  text: '我知道，最近真的太忙。' },
+        { role: 'heart', text: '<em>你已经做得够多了</em>。今晚先把这一晚照顾好。' },
+        { role: 'user',  text: '行。' },
+        { role: 'heart', text: '谢谢你。<em>晚安，咱们明天见</em>。' }
+      ],
+      alert: [
+        { role: 'heart', text: '你说胸口闷，<em>我得跟你确认几件事，你愿意吗</em>？', serious: true },
+        { role: 'user',  text: '就压了一下，现在缓过来了。' },
+        { role: 'heart', text: '好，但我还是要问清楚，<em>请认真回我</em>。', serious: true },
+        { role: 'heart', text: '胸闷持续多久了？\n有没有胸痛、呼吸困难、出汗、左肩左臂不舒服？', serious: true,
+          chips: [
+            { label: '< 1 分钟，已缓解', kind: 'chest-mild' },
+            { label: '仍在持续',         kind: 'chest-persist' },
+            { label: '有以上症状',       kind: 'red-alert', danger: true }
+          ]
+        }
+      ]
+    }
+  }
+};
+
+
+const SCENARIOS = {
+  stable: {
+    key: 'stable',
+    label: '稳   定',
+    risk: 'good',
+    stateLabel: 'stable',
+    scores: { load: 78, recovery: 82, vitality: 70, longterm: 76 },
+    heartLine: '今天跳得有劲。\n<em>没什么要抱怨的</em>。',
+    hr: 68,
+    sleep: 7.1,
+    greeting: '六月四日 · 周四',
+    time: '9:24',
+    weekDots: ['good','good','medium','good','good','good','good'],
+    flame: {
+      c1: '#c8351a', c2: '#e85a1f', c3: '#ffb066',
+      glow: 'rgba(200, 53, 26, 0.55)',
+      beat: '1.5s', flicker: '2.4s'
+    },
+    device: { mode: 'NORMAL', bpm: '72 bpm', color: '#E84A1A', bright: '70%' },
+    dialogue: [
+      { role: 'heart', text: '早上好。今天跳得挺有劲，<em>没什么要抱怨的</em>。' },
+      { role: 'user', text: '嗯，最近开始早点睡了。' },
+      { role: 'heart', text: '看出来了。继续这样，省得我老找你。' },
+      { role: 'user', text: '今晚跟朋友约了喝酒，没事吧？' },
+      { role: 'heart', text: '一杯没事，<em>三杯我跟你急</em>。' }
+    ]
+  },
+  tired: {
+    key: 'tired',
+    label: '熬 夜 疲 惫',
+    risk: 'medium',
+    stateLabel: 'tired',
+    scores: { load: 62, recovery: 36, vitality: 54, longterm: 71 },
+    heartLine: '你昨晚就让我睡了 <em>5 小时</em>。\n我今天跳得跟欠了什么似的。',
+    hr: 76,
+    sleep: 5.2,
+    greeting: '六月四日 · 周四',
+    time: '9:24',
+    weekDots: ['good','medium','good','good','low','good','medium'],
+    flame: {
+      c1: '#a85518', c2: '#d97a3d', c3: '#ecae6a',
+      glow: 'rgba(200, 100, 30, 0.42)',
+      beat: '1.6s', flicker: '2.8s'
+    },
+    device: { mode: 'TIRED', bpm: '68 bpm', color: '#C8451A', bright: '62%' },
+    dialogue: [
+      { role: 'heart', text: '听着，你昨晚就让我睡了 <em>5 个多小时</em>。\n我今天跳得跟欠了什么似的。' },
+      { role: 'user', text: '知道了，下午还得开会。' },
+      { role: 'heart', text: '会让你开，我也帮不上忙。\n但你别一坐就是仨小时，<em>给我点面子</em>。' },
+      { role: 'user', text: '那怎么办。' },
+      { role: 'heart', text: '一小时给我站起来一次，接杯水。\n就这么点事。' },
+      { role: 'user', text: '嗯。' },
+      { role: 'heart', text: '行，听见就行。' }
+    ]
+  },
+  tense: {
+    key: 'tense',
+    label: '久 坐 紧 张',
+    risk: 'medium',
+    stateLabel: 'tense',
+    scores: { load: 38, recovery: 60, vitality: 32, longterm: 70 },
+    heartLine: '你绷得 <em>跟根弦似的</em>。\n我跟着急了。',
+    hr: 82,
+    sleep: 6.4,
+    greeting: '六月四日 · 周四',
+    time: '14:18',
+    weekDots: ['good','good','medium','good','medium','good','medium'],
+    flame: {
+      c1: '#a85518', c2: '#d9783d', c3: '#ecae6a',
+      glow: 'rgba(232, 100, 30, 0.5)',
+      beat: '1.1s', flicker: '1.8s'
+    },
+    device: { mode: 'TENSE', bpm: '82 bpm', color: '#E0451A', bright: '75%' },
+    dialogue: [
+      { role: 'heart', text: '你今天上午绷得<em>跟根弦似的</em>。\n我跟着急。' },
+      { role: 'user', text: '项目今天要交。' },
+      { role: 'heart', text: '嗯，我也帮不上你写。' },
+      { role: 'user', text: '没时间停下来。' },
+      { role: 'heart', text: '<em>30 秒</em>。看一眼窗外。\n就当帮我个忙。' },
+      { role: 'user', text: '...' },
+      { role: 'heart', text: '嘿，没事，你忙你的。\n反正我也跑不了。' }
+    ]
+  },
+  weak: {
+    key: 'weak',
+    label: '连 续 透 支',
+    risk: 'low',
+    stateLabel: 'weak',
+    scores: { load: 45, recovery: 28, vitality: 38, longterm: 58 },
+    heartLine: '你已经 <em>连着三天</em> 睡不到 5 小时了。\n这事不能这么下去。',
+    hr: 78,
+    sleep: 4.8,
+    greeting: '六月四日 · 周四',
+    time: '21:42',
+    weekDots: ['medium','low','low','medium','low','low','low'],
+    flame: {
+      c1: '#8a5818', c2: '#c89238', c3: '#e8c878',
+      glow: 'rgba(200, 146, 56, 0.38)',
+      beat: '1.8s', flicker: '3.2s'
+    },
+    device: { mode: 'WEAK', bpm: '78 bpm', color: '#9C3818', bright: '50%' },
+    dialogue: [
+      { role: 'heart', text: '来，我跟你说件事。' },
+      { role: 'heart', text: '你这周已经<em>连着三天</em>睡不到 5 小时了。\n这事不是熬就能解决的。' },
+      { role: 'user', text: '我知道，最近真的太忙。' },
+      { role: 'heart', text: '你不算混蛋，<em>就是太能熬</em>。' },
+      { role: 'user', text: '这周末好好睡一觉吧。' },
+      { role: 'heart', text: '别等周末。\n今晚 <em>11 点</em>上床，先把这一晚补上。' },
+      { role: 'user', text: '行。' },
+      { role: 'heart', text: '行。<em>说话算话</em>。' }
+    ]
+  },
+  alert: {
+    key: 'alert',
+    label: '胸 闷 预 警',
+    risk: 'alert',
+    stateLabel: 'alert',
+    scores: { load: 22, recovery: 38, vitality: 48, longterm: 60 },
+    heartLine: '等等。\n你刚才说<em>胸口闷</em>，\n我得跟你确认几件事。',
+    hr: 96,
+    sleep: 5.5,
+    greeting: '六月四日 · 周四',
+    time: '14:36',
+    weekDots: ['medium','medium','low','good','medium','low','alert'],
+    flame: {
+      c1: '#8a1c10', c2: '#c8351a', c3: '#ff7a5c',
+      glow: 'rgba(138, 28, 16, 0.6)',
+      beat: '0.9s', flicker: '1.4s'
+    },
+    device: { mode: 'ALERT', bpm: '96 bpm', color: '#B8281A', bright: '100%' },
+    dialogue: [
+      { role: 'heart', text: '等等。你刚才说胸口闷。', serious: true },
+      { role: 'user', text: '就压了一下，现在缓过来了。' },
+      { role: 'heart', text: '缓过来归缓过来。\n这事我得问清楚。', serious: true },
+      { role: 'heart', text: '<em>胸闷持续多久了？</em>\n有没有胸痛、呼吸困难、出汗，或者左肩左臂不舒服？', serious: true,
+        chips: [
+          { label: '< 1 分钟，已缓解', kind: 'chest-mild' },
+          { label: '仍在持续', kind: 'chest-persist' },
+          { label: '有以上症状', kind: 'red-alert', danger: true }
+        ]
+      }
+    ]
+  }
+};
+
+const RISK_COLORS = {
+  good:   { c: '#c8351a', glow: 'rgba(200, 53, 26, 0.55)' },   // 旺火 · 红
+  medium: { c: '#c8651e', glow: 'rgba(200, 100, 30, 0.5)' },   // 中等 · 橙
+  low:    { c: '#c89238', glow: 'rgba(200, 146, 56, 0.45)' },  // 弱火 · 黄
+  alert:  { c: '#8a1c10', glow: 'rgba(138, 28, 16, 0.7)' }     // 红色信号（独立 · 深沉危机红）
+};
+
+const HEARTFIRE_GIFS = {
+  stable: 'assets/heartfire/heartfire-normal.gif',
+  tired: 'assets/heartfire/heartfire-shrink.gif',
+  tense: 'assets/heartfire/heartfire-sway.gif',
+  weak: 'assets/heartfire/heartfire-yellow.gif',
+  alert: 'assets/heartfire/heartfire-red.gif',
+};
+
+const state = {
+  currentTab: 'home',
+  scenario: 'tired',
+  messages: [],
+  waitingReply: false,
+  heartName: '我的心脏',
+  personality: 'approachable',
+  onboarded: false,
+  onboardStep: 1,
+  // Selections made during onboarding
+  onboardName: '',
+  onboardPersonality: 'approachable',
+  voiceReplyOn: false,
+};
+
+/* ============================================================
+   DOM
+   ============================================================ */
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+const els = {
+  pages: $$('.screen-page'),
+  tabs: $$('.tab'),
+  timeDisplay: $('#time-display'),
+  alertTime: $('#alert-time'),
+
+  homeGreet: $('#home-greet'),
+  stateLabel: $('#state-label'),
+  weekDots: $('#week-dots'),
+  scoreGrid: $('#score-grid'),
+  heartfireImage: $('#heartfire-image'),
+
+  chatStream: $('#chat-stream'),
+  chatScroll: $('#chat-scroll'),
+  chatSuggestions: $('#chat-suggestions'),
+  chatInputText: $('#chat-input-text'),
+  chatSendBtn: $('#chat-send-btn'),
+
+  tjNarrative: $('#tj-narrative'),
+  tjFootnote: $('#tj-footnote'),
+  tjBars: $('#tj-bars'),
+  tjBarLabels: $('#tj-bar-labels'),
+
+  modalAlert: $('#modal-alert'),
+  modalBreathe: $('#modal-breathe'),
+  modalTouch: $('#modal-touch'),
+  touchWho: $('#touch-who'),
+  breatheInstruction: $('#breathe-instruction'),
+  breatheCount: $('#breathe-count'),
+
+  // New
+  chipName: $('#chip-name'),
+  modalSettings: $('#modal-settings'),
+  settingName: $('#setting-name'),
+  personalityList: $('#personality-list'),
+  setDevMode: $('#set-dev-mode'),
+  setDevBpm: $('#set-dev-bpm'),
+
+  modalOnboard: $('#modal-onboard'),
+  onboardName: $('#onboard-name'),
+  onboardPersonalityList: $('#onboard-personality-list'),
+  onboardNext: $('#onboard-next'),
+  onboardBack: $('#onboard-back'),
+  onboardProgress: $('#onboard-progress'),
+  onboardSteps: $$('.onboard-step'),
+
+  devMode: $('#dev-mode'),
+  devBpm: $('#dev-bpm'),
+  devColor: $('#dev-color'),
+  devBright: $('#dev-bright'),
+
+  sceneList: $('#scene-list'),
+  toast: $('#toast'),
+  touchBadge: $('#touch-badge'),
+  touchList: $('#touch-list'),
+};
+
+/* ============================================================
+   RENDERERS
+   ============================================================ */
+
+function renderScene() {
+  const s = SCENARIOS[state.scenario];
+
+  els.homeGreet.textContent = s.greeting;
+  els.stateLabel.textContent = s.stateLabel;
+  els.timeDisplay.textContent = s.time;
+  els.alertTime.textContent = s.time;
+  if (els.chipName) els.chipName.textContent = `${state.heartName} · 设置`;
+
+  const root = document.documentElement;
+  root.style.setProperty('--flame-c1', s.flame.c1);
+  root.style.setProperty('--flame-c2', s.flame.c2);
+  root.style.setProperty('--flame-c3', s.flame.c3);
+  root.style.setProperty('--flame-glow', s.flame.glow);
+  root.style.setProperty('--beat-duration', s.flame.beat);
+  root.style.setProperty('--flicker-duration', s.flame.flicker);
+  if (els.heartfireImage) {
+    const nextSrc = HEARTFIRE_GIFS[s.key] || HEARTFIRE_GIFS.stable;
+    if (!els.heartfireImage.src.endsWith(nextSrc)) els.heartfireImage.src = nextSrc;
+  }
+
+  els.weekDots.innerHTML = s.weekDots.map((color, i) => {
+    const isToday = i === 6;
+    const rc = RISK_COLORS[color];
+    return `<div class="wdot${isToday ? ' today' : ''}" style="--c:${rc.c};--c-glow:${rc.glow};"></div>`;
+  }).join('');
+
+  // Render heart rate + 3 abstract score cards
+  if (els.scoreGrid && s.scores) {
+    const scoreColor = (val) => {
+      if (val >= 70) return RISK_COLORS.good;
+      if (val >= 50) return RISK_COLORS.medium;
+      if (val >= 30) return RISK_COLORS.low;
+      return RISK_COLORS.alert;
+    };
+    els.scoreGrid.innerHTML = ['heartRate','recovery','vitality','longterm'].map(key => {
+      const meta = SCORE_META[key];
+      const val = key === 'heartRate' ? s.hr : s.scores[key];
+      const rc = scoreColor(val);
+      if (key === 'heartRate') {
+        return `<div class="score-card" data-score="${key}">
+          <div class="sc-info">i</div>
+          <div class="sc-label">${meta.label}</div>
+          <div class="sc-val-row">
+            <span class="sc-val">${val}</span>
+            <span class="sc-total">bpm</span>
+          </div>
+          <div class="sc-bar"><div class="sc-bar-fill" style="width:${Math.min(Math.max(val, 0), 200) / 2}%;--sc-c:${rc.c};--sc-glow:${rc.glow};"></div></div>
+        </div>`;
+      }
+      return `<div class="score-card" data-score="${key}">
+        <div class="sc-info">i</div>
+        <div class="sc-label">${meta.label}</div>
+        <div class="sc-val-row">
+          <span class="sc-val">${val}</span>
+          <span class="sc-total">/ 100</span>
+        </div>
+        <div class="sc-bar"><div class="sc-bar-fill" style="width:${val}%;--sc-c:${rc.c};--sc-glow:${rc.glow};"></div></div>
+      </div>`;
+    }).join('');
+
+    // Wire up taps
+    els.scoreGrid.querySelectorAll('.score-card').forEach(card => {
+      card.addEventListener('click', () => openScoreModal(card.dataset.score));
+    });
+  }
+
+  // Trajectory page — bars and narrative
+  const tjData = TRAJECTORY_NARRATIVES[state.personality] || TRAJECTORY_NARRATIVES.approachable;
+  els.tjNarrative.innerHTML = tjData.text.replace(/\n/g, '<br>');
+  els.tjFootnote.innerHTML = tjData.footnote;
+
+  const BAR_HEIGHTS = { good: 88, medium: 56, low: 28, alert: 20 };
+  const DAY_LABELS = ['五', '六', '日', '一', '二', '三', '今'];
+
+  els.tjBars.innerHTML = s.weekDots.map((color, i) => {
+    const isToday = i === 6;
+    const rc = RISK_COLORS[color];
+    const h = BAR_HEIGHTS[color];
+    return `<div class="tj-bar-wrap">
+      <div class="tj-bar${isToday ? ' today' : ''}" style="height:${h}%;--c:${rc.c};--c-glow:${rc.glow};"></div>
+    </div>`;
+  }).join('');
+
+  els.tjBarLabels.innerHTML = DAY_LABELS.map((d, i) => {
+    const isToday = i === 6;
+    return `<div class="tj-bar-label${isToday ? ' today' : ''}">${d}</div>`;
+  }).join('');
+
+  if (els.setDevMode) els.setDevMode.textContent = s.device.mode;
+  if (els.setDevBpm) els.setDevBpm.textContent = s.device.bpm;
+
+  $$('.scene-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.scene === state.scenario);
+  });
+
+  resetChat();
+}
+
+function renderTab() {
+  els.pages.forEach(p => {
+    p.classList.toggle('active', p.dataset.page === state.currentTab);
+  });
+  els.tabs.forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === state.currentTab);
+  });
+}
+
+/* ============================================================
+   TAB NAV
+   ============================================================ */
+function setTab(tab) {
+  state.currentTab = tab;
+  renderTab();
+}
+els.tabs.forEach(t => t.addEventListener('click', () => setTab(t.dataset.tab)));
+
+/* ============================================================
+   CHAT
+   ============================================================ */
+
+function appendMessage({ role, text, serious = false, action = null, chips = null }) {
+  const stream = els.chatStream;
+
+  if (stream.children.length === 0) {
+    const tm = document.createElement('div');
+    tm.className = 'msg-time';
+    tm.textContent = `今天 ${SCENARIOS[state.scenario].time}`;
+    stream.appendChild(tm);
+  }
+
+  const msg = document.createElement('div');
+  msg.className = `msg ${role}${serious ? ' serious' : ''}`;
+  if (role === 'heart') {
+    const speakerSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`;
+    msg.innerHTML = text.replace(/\n/g, '<br>') + `<button class="msg-speaker" title="朗读">${speakerSvg}</button>`;
+  } else {
+    msg.innerHTML = text.replace(/\n/g, '<br>');
+  }
+
+  if (action) {
+    const a = document.createElement('div');
+    a.className = 'embedded-action';
+    a.innerHTML = `
+      <div class="info">
+        <div class="title">${action.title}</div>
+        <div class="reason">— ${action.reason}</div>
+      </div>
+      <button class="start" data-action-kind="${action.kind}">开 始</button>
+    `;
+    msg.appendChild(a);
+  }
+
+  stream.appendChild(msg);
+  scrollChatToBottom();
+
+  if (chips) {
+    const wrap = document.createElement('div');
+    wrap.className = 'quick-actions';
+    chips.forEach(chip => {
+      const b = document.createElement('button');
+      b.className = `qa-btn${chip.primary ? ' primary' : ''}${chip.danger ? ' danger' : ''}`;
+      b.textContent = chip.label;
+      b.dataset.kind = chip.kind;
+      wrap.appendChild(b);
+    });
+    stream.appendChild(wrap);
+    scrollChatToBottom();
+  }
+}
+
+function scrollChatToBottom() {
+  setTimeout(() => {
+    els.chatScroll.scrollTop = els.chatScroll.scrollHeight;
+  }, 60);
+}
+
+function showTyping() {
+  const t = document.createElement('div');
+  t.className = 'typing-dots';
+  t.id = 'typing-indicator';
+  t.innerHTML = '<span></span><span></span><span></span>';
+  els.chatStream.appendChild(t);
+  scrollChatToBottom();
+}
+function hideTyping() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+
+function resetChat() {
+  els.chatStream.innerHTML = '';
+  const s = SCENARIOS[state.scenario];
+
+  // Per-personality dialogue lookup; fallback to scenario.dialogue if missing
+  const persona = PERSONALITIES[state.personality];
+  const personalityDialogue = persona && persona.dialogues && persona.dialogues[s.key];
+  const dialogue = personalityDialogue || s.dialogue || [];
+
+  dialogue.forEach((turn, i) => {
+    appendMessage({
+      role: turn.role,
+      text: turn.text,
+      serious: turn.serious || false,
+      chips: turn.chips || null,
+    });
+  });
+
+  renderSuggestions();
+}
+
+function renderSuggestions() {
+  const suggestions = [
+    { label: '昨晚只睡了五小时', kind: 'sleep' },
+    { label: '我坐好久了', kind: 'sitting' },
+    { label: '刚才运动了一下', kind: 'exercise' },
+    { label: '我现在压力很大', kind: 'stress' },
+  ];
+
+  els.chatSuggestions.innerHTML = suggestions.map(item =>
+    `<button class="suggestion" data-soul-scene="${item.kind}">${item.label}</button>`
+  ).join('');
+}
+
+function getSoulSceneReply(sceneKey) {
+  const replies = SOUL_SCENE_REPLIES[sceneKey];
+  if (!replies) return null;
+  return replies[state.personality] || replies.approachable;
+}
+
+/* ============================================================
+   REPLY GENERATOR — all voice strictly per soul.md
+   ============================================================ */
+function generateReply(userText) {
+  const t = userText.trim();
+
+  if (/五小时|5\s*小时|睡眠不足|缺觉|没睡够|熬夜/.test(t)) {
+    return { text: getSoulSceneReply('sleep') };
+  }
+
+  if (/久坐|坐好久|坐太久|没动|走两步|站起来/.test(t)) {
+    return { text: getSoulSceneReply('sitting') };
+  }
+
+  if (/运动|散步|跑了|走了|动了一下|出汗/.test(t)) {
+    return { text: getSoulSceneReply('exercise') };
+  }
+
+  if (/压力|紧张|绷着|焦虑|放松|深呼吸|呼吸/.test(t)) {
+    return { text: getSoulSceneReply('stress') };
+  }
+
+  // 胸口/胸闷/胸痛 — always escalates to symptom triage. Serious, no humor.
+  if (/胸口|胸痛|胸闷|心慌|心悸/.test(t)) {
+    return {
+      text: '等等，这事不开玩笑。\n<em>胸闷持续多久了？</em>\n有没有胸痛、呼吸困难、出汗，或者左肩左臂不舒服？',
+      serious: true,
+      chips: [
+        { label: '< 1 分钟，已缓解', kind: 'chest-mild' },
+        { label: '仍在持续', kind: 'chest-persist' },
+        { label: '有以上症状', kind: 'red-alert', danger: true }
+      ]
+    };
+  }
+
+  // 医院/就医/看病
+  if (/医院|看医生|就医|挂号|急诊/.test(t)) {
+    return {
+      text: '如果是<em>剧烈胸痛</em>、持续胸闷、呼吸困难——别等，直接急诊。\n\n要是只是这几天觉得不对劲，找个时间挂个心内科。\n\n<em>我不替医生说话</em>。',
+    };
+  }
+
+  // 喝酒 — scenario-dependent
+  if (/酒|喝/.test(t)) {
+    if (state.scenario === 'stable') {
+      return { text: '一杯没事，<em>三杯我跟你急</em>。' };
+    }
+    return {
+      text: '今晚悠着点。我这两天已经够够的了。\n\n要是憋不住，<em>一杯封顶</em>。'
+    };
+  }
+
+  // 累/疲/困
+  if (/累|疲|困|乏/.test(t)) {
+    return {
+      text: '我也累。\n\n不用一次到位。今晚 <em>11 点</em>上床，我就当没事过。'
+    };
+  }
+
+  // 别烦我 / 别管我 / 我很忙
+  if (/烦|别提醒|别管|忙|没时间/.test(t)) {
+    return {
+      text: '知道你忙。我也没要你改变人生。\n\n<em>三分钟</em>，站起来接杯水，我就消停。\n\n你想干别的就去干，反正我也跑不了。'
+    };
+  }
+
+  // 家人 / 妻 / 老婆 / 爸妈
+  if (/家人|妻|老婆|爸|妈|女儿|儿子|让.*知道/.test(t)) {
+    return {
+      text: '可以。\n他们看不到具体数字，就看我现在<em>什么颜色</em>。\n\n偶尔来戳一下就行，又不是请人盯你。',
+      chips: [
+        { label: '去牵绊页', kind: 'goto-family' },
+      ]
+    };
+  }
+
+  // 状态 / 怎么样 — repeat opening line of current personality+scenario dialogue
+  if (/状态|怎么样|如何|样子/.test(t)) {
+    const persona = PERSONALITIES[state.personality];
+    const d = persona && persona.dialogues && persona.dialogues[state.scenario];
+    const firstHeart = (d || []).find(turn => turn.role === 'heart');
+    return { text: firstHeart ? firstHeart.text : '我在这。' };
+  }
+
+  // 为什么 / 颜色 / 暗 / 弱
+  if (/为什么|颜色|暗|变弱|不好/.test(t)) {
+    return {
+      text: '看睡眠。\n<em>三天少于 5 小时</em>，能不蔫吗。\n\n今晚先把这一晚保住，别管之前。'
+    };
+  }
+
+  // 7天 / 这周 / 趋势 — Agent weekly summary
+  if (/7 天|七天|这周|这几天|近期|趋势|看看/.test(t)) {
+    return {
+      text: '这周我最蔫的是<em>周二</em>和<em>今天</em>。\n\n睡眠少于 <em>5 小时</em> 的三天就是元凶。\n\n你不算混蛋，<em>就是太能熬</em>。',
+    };
+  }
+
+  // 呼吸 / 慢一点 / 平静
+  if (/呼吸|慢|静|平|放松/.test(t)) {
+    return {
+      text: '行。跟我慢一点，一分钟就够。',
+    };
+  }
+
+  // 谢谢 / 嗯 / 好的
+  if (/谢谢|好的|嗯|知道了|明白/.test(t)) {
+    return { text: '嗯。' };
+  }
+
+  // 夸 / 我做得好 / 走了
+  if (/做得好|散步|走了|跑了|出汗|早睡|睡够/.test(t)) {
+    return { text: '嗯，跳得顺了。<em>不错</em>。' };
+  }
+
+  // Default
+  return {
+    text: '嗯？\n你想说哪个——睡眠？胸口？还是这两天的事？',
+  };
+}
+
+function sendUserMessage(text) {
+  if (!text.trim() || state.waitingReply) return;
+
+  appendMessage({ role: 'user', text });
+  els.chatInputText.value = '';
+  els.chatSuggestions.innerHTML = '';
+  state.waitingReply = true;
+
+  setTimeout(() => {
+    showTyping();
+    setTimeout(() => {
+      hideTyping();
+      const reply = generateReply(text);
+      appendMessage({
+        role: 'heart',
+        text: reply.text,
+        serious: reply.serious,
+        action: reply.action,
+        chips: reply.chips,
+      });
+      state.waitingReply = false;
+      renderSuggestions();
+    }, 900);
+  }, 350);
+}
+
+els.chatSendBtn.addEventListener('click', () => sendUserMessage(els.chatInputText.value));
+els.chatInputText.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') sendUserMessage(els.chatInputText.value);
+});
+
+els.chatSuggestions.addEventListener('click', (e) => {
+  if (e.target.classList.contains('suggestion')) {
+    sendUserMessage(e.target.textContent);
+  }
+});
+
+els.chatStream.addEventListener('click', (e) => {
+  const chipBtn = e.target.closest('.qa-btn');
+  const actionBtn = e.target.closest('.embedded-action .start');
+
+  if (chipBtn) {
+    handleChipAction(chipBtn.dataset.kind, chipBtn.textContent);
+  } else if (actionBtn) {
+    handleEmbeddedAction(actionBtn.dataset.actionKind);
+  }
+});
+
+function handleChipAction(kind, label) {
+  appendMessage({ role: 'user', text: label });
+
+  setTimeout(() => {
+    const chips = els.chatStream.querySelectorAll('.quick-actions');
+    chips.forEach(c => c.remove());
+  }, 50);
+
+  state.waitingReply = true;
+  setTimeout(() => {
+    showTyping();
+    setTimeout(() => {
+      hideTyping();
+      let reply;
+
+      switch (kind) {
+        case 'chest-mild':
+          reply = {
+            text: '行。<em>先坐下 10 分钟</em>，喝口水。\n\n要是今天再出现一次，<em>别拖了</em>，挂个心内科。'
+          };
+          break;
+        case 'chest-persist':
+          reply = {
+            text: '这事我得认真说一下。\n\n胸闷<em>持续超过几分钟</em>不正常。请<strong>现在停下</strong>手里的事，坐下或半躺，联系身边的人。\n\n如果加重，叫救护车，<strong>别等</strong>。',
+            serious: true,
+            chips: [
+              { label: '已经停下，找了人', kind: 'noted' },
+              { label: '症状加重了', kind: 'red-alert', danger: true }
+            ]
+          };
+          break;
+        case 'red-alert':
+          showAlert();
+          reply = {
+            text: '这<strong>不是普通疲劳</strong>。请<strong>现在停止活动</strong>。\n\n红色提醒已打开。',
+            serious: true,
+          };
+          break;
+        case 'goto-family':
+          setTimeout(() => setTab('family'), 400);
+          reply = { text: '嗯，去吧。' };
+          break;
+        case 'noted':
+          reply = { text: '行。继续注意。\n再次出现就叫救护车，<em>别等</em>。' };
+          break;
+        default:
+          reply = { text: '嗯。' };
+      }
+
+      appendMessage({ ...reply, role: 'heart' });
+      state.waitingReply = false;
+      renderSuggestions();
+    }, 1000);
+  }, 300);
+}
+
+function handleEmbeddedAction(kind) {
+  switch (kind) {
+    case 'walk':
+      showToast('已开始 · 走 8 分钟');
+      setTimeout(() => {
+        appendMessage({
+          role: 'heart',
+          text: '嗯，跳得顺了。<em>不错</em>。'
+        });
+      }, 1800);
+      break;
+    case 'breathe':
+      showBreathing();
+      break;
+    case 'sleep':
+      showToast('今晚 23:00 · 睡眠提醒已设');
+      break;
+    case 'rest':
+      showToast('已开始 · 静坐 10 分钟');
+      break;
+    default:
+      showToast('记下了');
+  }
+}
+
+/* ============================================================
+   FAMILY
+   ============================================================ */
+$$('.fam-member').forEach(m => {
+  m.addEventListener('click', () => {
+    els.touchWho.textContent = `— ${m.dataset.fam} —`;
+    els.modalTouch.classList.add('active');
+    els.modalTouch._who = m.dataset.fam;
+  });
+});
+
+$('#touch-cancel').addEventListener('click', () => {
+  els.modalTouch.classList.remove('active');
+});
+$('#touch-send').addEventListener('click', () => {
+  const who = els.modalTouch._who;
+  els.modalTouch.classList.remove('active');
+  showToast(`已告诉 ${who} · 只是颜色`);
+  prependTouchRow(who);
+});
+
+function prependTouchRow(who) {
+  const row = document.createElement('div');
+  row.className = 'touch-row self';
+  row.style.animation = 'msg-appear 0.5s ease';
+  row.innerHTML = `
+    <div class="touch-avatar">我</div>
+    <div class="touch-meta">
+      <div class="who">你告诉了 ${who}</div>
+      <div class="what">「现在的心火颜色 · 不含数字」</div>
+    </div>
+    <div class="touch-time">刚 刚</div>
+  `;
+  els.touchList.insertBefore(row, els.touchList.firstChild);
+
+  const cur = parseInt(els.touchBadge.textContent) || 3;
+  els.touchBadge.textContent = `${cur + 1} NEW`;
+}
+
+$('#share-level').addEventListener('click', () => {
+  showToast('权限设置 · 仅显示心火颜色');
+});
+
+/* ============================================================
+   SETTINGS MODAL
+   ============================================================ */
+$('#device-chip').addEventListener('click', () => openSettings());
+
+function openSettings() {
+  // populate
+  els.settingName.value = state.heartName;
+  renderPersonalityList(els.personalityList, state.personality, (key) => {
+    state.personality = key;
+    renderPersonalityList(els.personalityList, key);
+    renderScene();
+  });
+  // device info
+  const s = SCENARIOS[state.scenario];
+  if (els.setDevMode) els.setDevMode.textContent = s.device.mode;
+  if (els.setDevBpm) els.setDevBpm.textContent = s.device.bpm;
+
+  els.modalSettings.classList.add('active');
+}
+
+$('#settings-close').addEventListener('click', () => els.modalSettings.classList.remove('active'));
+$('#settings-done').addEventListener('click', () => {
+  // commit name
+  const newName = els.settingName.value.trim();
+  if (newName) state.heartName = newName;
+  els.modalSettings.classList.remove('active');
+  renderScene();
+  showToast(`已保存 · ${state.heartName}`);
+});
+
+$('#fam-invite').addEventListener('click', () => {
+  showToast('邀请链接已复制 · 可发给家人');
+});
+
+function renderPersonalityList(containerEl, selectedKey, onPick) {
+  containerEl.innerHTML = Object.values(PERSONALITIES).map(p => `
+    <button class="personality-btn ${p.key === selectedKey ? 'active' : ''}" data-personality="${p.key}">
+      <div class="p-seal">${p.seal}</div>
+      <div class="p-info">
+        <div class="p-name">${p.label}</div>
+        <div class="p-desc">${p.desc}</div>
+        <div class="p-preview">${p.preview}</div>
+      </div>
+    </button>
+  `).join('');
+
+  containerEl.querySelectorAll('.personality-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.personality;
+      if (onPick) onPick(key);
+    });
+  });
+}
+
+/* ============================================================
+   ONBOARDING
+   ============================================================ */
+function startOnboarding() {
+  state.onboardStep = 1;
+  state.onboardName = '';
+  state.onboardPersonality = 'approachable';
+  els.onboardName.value = '';
+  showOnboardStep(1);
+  renderOnboardingPersonality();
+  els.modalOnboard.classList.add('active');
+}
+
+function renderOnboardingPersonality() {
+  renderPersonalityList(els.onboardPersonalityList, state.onboardPersonality, (key) => {
+    state.onboardPersonality = key;
+    renderOnboardingPersonality();
+  });
+}
+
+function showOnboardStep(n) {
+  state.onboardStep = n;
+  els.onboardSteps.forEach(s => {
+    s.classList.toggle('active', parseInt(s.dataset.step) === n);
+  });
+  els.onboardProgress.innerHTML = `<span class="dot ${n===1?'active':''}"></span><span class="dot ${n===2?'active':''}"></span>`;
+  els.onboardBack.style.display = n === 1 ? 'none' : 'block';
+  els.onboardNext.textContent = n === 2 ? '完 成 · 进 入' : '下 一 步';
+
+  // Update next button enabled state
+  updateOnboardNextState();
+}
+
+function updateOnboardNextState() {
+  if (state.onboardStep === 1) {
+    const v = els.onboardName.value.trim();
+    els.onboardNext.disabled = false; // allow empty → defaults to 我的心脏
+  } else {
+    els.onboardNext.disabled = false;
+  }
+}
+
+els.onboardName.addEventListener('input', updateOnboardNextState);
+
+els.onboardNext.addEventListener('click', () => {
+  if (state.onboardStep === 1) {
+    state.onboardName = els.onboardName.value.trim() || '我的心脏';
+    showOnboardStep(2);
+  } else {
+    // Finish: commit choices
+    state.heartName = state.onboardName;
+    state.personality = state.onboardPersonality;
+    state.onboarded = true;
+    els.modalOnboard.classList.remove('active');
+    renderScene();
+    setTimeout(() => {
+      showToast(`你好，${state.heartName}`);
+    }, 500);
+  }
+});
+
+els.onboardBack.addEventListener('click', () => {
+  if (state.onboardStep === 2) showOnboardStep(1);
+});
+
+/* ============================================================
+   FAMILY TOUCHES — listen for cross-tab messages from family page
+   ============================================================ */
+function appendTouchToHome({ from, type, msg }) {
+  const list = $('#ht-list');
+  if (!list) return;
+
+  const initial = from.charAt(0);
+  const icons = { poke: '·', hug: '♡', touch: '~' };
+  const verbs = { poke: '戳了一下你', hug: '给你一个抱抱', touch: '摸了一下你' };
+
+  const row = document.createElement('div');
+  row.className = 'ht-row unread';
+  row.innerHTML = `
+    <div class="ht-avatar">${initial}</div>
+    <div class="ht-action-icon">${icons[type] || '·'}</div>
+    <div class="ht-text">
+      <span class="ht-from">${from}</span> ${verbs[type] || ''}
+      ${msg ? `<span class="ht-msg">「${msg}」</span>` : ''}
+    </div>
+    <div class="ht-time">刚 刚</div>
+  `;
+  list.insertBefore(row, list.firstChild);
+
+  // Bump badge
+  const cur = $('#ht-count');
+  if (cur) {
+    const n = parseInt(cur.textContent) || 0;
+    cur.textContent = `${n + 1} NEW`;
+  }
+}
+
+// Listen via localStorage for cross-tab events from family page
+try {
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'heartfire_touch' && e.newValue) {
+      try {
+        const data = JSON.parse(e.newValue);
+        appendTouchToHome(data);
+        showToast(`${data.from} ${data.type === 'poke' ? '戳' : data.type === 'hug' ? '抱' : '摸'}了你一下`);
+      } catch (err) {}
+    }
+  });
+  // Also poll for direct demo (single tab) — read once on start
+} catch (e) {}
+
+/* ============================================================
+   RED ALERT
+   ============================================================ */
+function showAlert() { els.modalAlert.classList.add('active'); }
+$('#alert-dismiss').addEventListener('click', () => {
+  els.modalAlert.classList.remove('active');
+  showToast('请记得复查 · 不要硬扛');
+});
+$('#call-120').addEventListener('click', () => {
+  showToast('演示模式 · 真实场景将拨打急救');
+});
+$('#notify-family').addEventListener('click', () => {
+  showToast('已通知紧急联系人 · 妻子');
+});
+
+/* ============================================================
+   BREATHING
+   ============================================================ */
+let breatheTimer = null;
+function showBreathing() {
+  els.modalBreathe.classList.add('active');
+  let remaining = 60;
+  els.breatheCount.textContent = `剩余 ${remaining}s`;
+
+  let phase = 0;
+  els.breatheInstruction.textContent = '吸 气';
+
+  const tick = () => {
+    remaining--;
+    els.breatheCount.textContent = `剩余 ${remaining}s`;
+    if (remaining % 4 === 0) {
+      phase = 1 - phase;
+      els.breatheInstruction.textContent = phase === 0 ? '吸 气' : '呼 气';
+    }
+    if (remaining <= 0) {
+      closeBreathing();
+      setTimeout(() => {
+        appendMessage({
+          role: 'heart',
+          text: '行，慢下来了。\n你刚才有几口气特别长，<em>那个挺好</em>。'
+        });
+      }, 400);
+    }
+  };
+  breatheTimer = setInterval(tick, 1000);
+}
+function closeBreathing() {
+  if (breatheTimer) { clearInterval(breatheTimer); breatheTimer = null; }
+  els.modalBreathe.classList.remove('active');
+}
+$('#breathe-close').addEventListener('click', closeBreathing);
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+let toastTimer = null;
+function showToast(msg) {
+  els.toast.textContent = msg;
+  els.toast.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => els.toast.classList.remove('show'), 2400);
+}
+
+/* ============================================================
+   DEV PANEL
+   ============================================================ */
+function buildScenes() {
+  const html = Object.values(SCENARIOS).map(s => {
+    const rc = RISK_COLORS[s.risk];
+    return `<button class="scene-btn ${state.scenario === s.key ? 'active' : ''}" data-scene="${s.key}">
+      <span class="risk-dot" style="background:${rc.c};box-shadow:0 0 6px ${rc.glow};"></span>
+      <span>${s.label}</span>
+      <span class="key">${s.key.toUpperCase()}</span>
+    </button>`;
+  }).join('');
+  els.sceneList.innerHTML = html;
+
+  $$('.scene-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      state.scenario = b.dataset.scene;
+      renderScene();
+      els.modalAlert.classList.remove('active');
+    });
+  });
+}
+
+/* ============================================================
+   SCORE DETAIL MODAL
+   ============================================================ */
+function openScoreModal(key) {
+  const meta = SCORE_META[key];
+  const s = SCENARIOS[state.scenario];
+  if (!meta || !s.scores) return;
+  const val = key === 'heartRate' ? s.hr : s.scores[key];
+
+  document.getElementById('sc-modal-eyebrow').textContent = meta.eyebrow;
+  document.getElementById('sc-modal-title').textContent = meta.title;
+  document.getElementById('sc-modal-num').textContent = val;
+  document.getElementById('sc-modal-unit').textContent = key === 'heartRate' ? ' bpm' : ' / 100';
+  document.getElementById('sc-modal-affect').textContent = meta.affect;
+  const judge = key === 'heartRate'
+    ? `${meta.judge}\n上次更新：${s.time}`
+    : meta.judge;
+  document.getElementById('sc-modal-judge').innerHTML = judge.replace(/\n/g, '<br>');
+
+  document.getElementById('modal-score').classList.add('active');
+}
+
+document.getElementById('sc-modal-close').addEventListener('click', () => {
+  document.getElementById('modal-score').classList.remove('active');
+});
+
+/* ============================================================
+   VOICE INPUT / OUTPUT
+   ============================================================ */
+const voiceOverlay = document.getElementById('voice-overlay');
+const micBtn = document.getElementById('mic-btn');
+const voiceCancel = document.getElementById('voice-cancel');
+const voiceToggle = document.getElementById('voice-toggle');
+
+let voiceTimer = null;
+
+micBtn.addEventListener('click', () => {
+  micBtn.classList.add('recording');
+  voiceOverlay.classList.add('active');
+  // Demo: after 2s, simulate a transcribed message
+  voiceTimer = setTimeout(() => {
+    micBtn.classList.remove('recording');
+    voiceOverlay.classList.remove('active');
+    // Simulate a recognized utterance
+    const samples = ['我今天状态怎么样', '我有点累', '我今晚能喝点酒吗', '我胸口有点闷'];
+    const text = samples[Math.floor(Math.random() * samples.length)];
+    sendUserMessage(text);
+  }, 2400);
+});
+
+voiceCancel.addEventListener('click', () => {
+  if (voiceTimer) { clearTimeout(voiceTimer); voiceTimer = null; }
+  micBtn.classList.remove('recording');
+  voiceOverlay.classList.remove('active');
+});
+
+voiceToggle.addEventListener('click', () => {
+  state.voiceReplyOn = !state.voiceReplyOn;
+  voiceToggle.classList.toggle('on', state.voiceReplyOn);
+  showToast(state.voiceReplyOn ? '语音回复已开启' : '语音回复已关闭');
+});
+
+// Speaker click handler — wired via event delegation on chat stream
+els.chatStream.addEventListener('click', (e) => {
+  const speaker = e.target.closest('.msg-speaker');
+  if (speaker) {
+    e.stopPropagation();
+    speaker.classList.add('playing');
+    showToast('正在朗读…');
+    setTimeout(() => speaker.classList.remove('playing'), 2000);
+  }
+});
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+buildScenes();
+renderScene();
+renderTab();
+
+// Restart onboarding button
+$('#restart-onboard').addEventListener('click', () => startOnboarding());
+
+// Show onboarding on first load
+setTimeout(() => {
+  if (!state.onboarded) startOnboarding();
+}, 300);
+</script>
+
+</body>
+</html>

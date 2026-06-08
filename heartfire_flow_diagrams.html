@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>心心之火｜用户流程与产品架构图</title>
+  <style>
+    :root {
+      --bg: #f6f1e8;
+      --panel: #fffaf2;
+      --ink: #1f1a16;
+      --muted: #786f67;
+      --line: #d8c8b8;
+      --strong-line: #9a765d;
+      --fire: #ef6a2e;
+      --fire-soft: #fff0df;
+      --red: #bd3038;
+      --red-soft: #fff0f0;
+      --green: #35735b;
+      --green-soft: #edf8f1;
+      --blue: #2e6e8d;
+      --blue-soft: #edf7fb;
+      --violet: #6953a4;
+      --violet-soft: #f3f0ff;
+      --gray-soft: #f7f4ef;
+      --shadow: 0 18px 45px rgba(67, 45, 28, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(255, 179, 71, 0.22), transparent 34%),
+        linear-gradient(140deg, #fbf7ef, var(--bg));
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    .page {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 28px 44px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr 330px;
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 36px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .rule-card {
+      padding: 15px 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 250, 242, 0.78);
+      box-shadow: var(--shadow);
+      color: #5f4c40;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 6px;
+      margin-bottom: 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 250, 242, 0.72);
+    }
+
+    .tab-button {
+      height: 48px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: #5f544d;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .tab-button.active {
+      background: #211b16;
+      color: #fff7ec;
+      box-shadow: 0 10px 22px rgba(33, 27, 22, 0.16);
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .canvas {
+      position: relative;
+      min-height: 760px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 250, 242, 0.96), rgba(255, 247, 233, 0.92));
+      box-shadow: var(--shadow);
+    }
+
+    .canvas-head {
+      position: absolute;
+      left: 28px;
+      top: 22px;
+      z-index: 5;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      width: calc(100% - 56px);
+      gap: 20px;
+    }
+
+    .canvas-head h2 {
+      margin: 0 0 8px;
+      font-size: 25px;
+      letter-spacing: 0;
+    }
+
+    .canvas-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(2, max-content);
+      gap: 7px 13px;
+      padding: 10px 12px;
+      border: 1px solid rgba(216, 200, 184, 0.8);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.58);
+      color: #66594d;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .legend span::before {
+      content: "";
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      margin-right: 6px;
+      border-radius: 2px;
+      vertical-align: -1px;
+      background: var(--c);
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: 760px;
+    }
+
+    .lane {
+      fill: rgba(255, 255, 255, 0.42);
+      stroke: rgba(154, 118, 93, 0.18);
+      stroke-width: 1;
+    }
+
+    .lane-title {
+      fill: #7b6d62;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .box {
+      fill: #fffdf8;
+      stroke: rgba(105, 83, 65, 0.22);
+      stroke-width: 1.2;
+      filter: drop-shadow(0 8px 16px rgba(67, 45, 28, 0.08));
+    }
+
+    .box-fire {
+      fill: var(--fire-soft);
+      stroke: rgba(239, 106, 46, 0.42);
+    }
+
+    .box-agent {
+      fill: #fff6e8;
+      stroke: rgba(239, 106, 46, 0.38);
+    }
+
+    .box-backend {
+      fill: var(--blue-soft);
+      stroke: rgba(46, 110, 141, 0.35);
+    }
+
+    .box-family {
+      fill: var(--green-soft);
+      stroke: rgba(53, 115, 91, 0.35);
+    }
+
+    .box-hardware {
+      fill: var(--violet-soft);
+      stroke: rgba(105, 83, 164, 0.35);
+    }
+
+    .box-risk {
+      fill: var(--red-soft);
+      stroke: rgba(189, 48, 56, 0.42);
+    }
+
+    .box-muted {
+      fill: var(--gray-soft);
+      stroke: rgba(105, 83, 65, 0.2);
+    }
+
+    .decision {
+      fill: #fffaf2;
+      stroke: rgba(154, 118, 93, 0.5);
+      stroke-width: 1.4;
+      filter: drop-shadow(0 8px 16px rgba(67, 45, 28, 0.08));
+    }
+
+    .title {
+      fill: var(--ink);
+      font-size: 15px;
+      font-weight: 850;
+    }
+
+    .small-title {
+      fill: var(--ink);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .text {
+      fill: #66594d;
+      font-size: 12px;
+    }
+
+    .tiny {
+      fill: #796f66;
+      font-size: 11px;
+    }
+
+    .chip {
+      fill: rgba(255, 255, 255, 0.72);
+      stroke: rgba(154, 118, 93, 0.22);
+    }
+
+    .chip-text {
+      fill: #5f544d;
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    .arrow {
+      fill: none;
+      stroke: var(--strong-line);
+      stroke-width: 2.2;
+      marker-end: url(#arrow);
+    }
+
+    .arrow-soft {
+      fill: none;
+      stroke: rgba(154, 118, 93, 0.62);
+      stroke-width: 2;
+      marker-end: url(#arrowSoft);
+    }
+
+    .arrow-red {
+      fill: none;
+      stroke: var(--red);
+      stroke-width: 2.2;
+      marker-end: url(#arrowRed);
+    }
+
+    .arrow-dash {
+      fill: none;
+      stroke: rgba(154, 118, 93, 0.72);
+      stroke-width: 2;
+      stroke-dasharray: 7 7;
+      marker-end: url(#arrowSoft);
+    }
+
+    .label {
+      fill: #7a604e;
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    .note {
+      fill: #fff7e8;
+      stroke: rgba(239, 106, 46, 0.36);
+      stroke-width: 1;
+    }
+
+    .note-text {
+      fill: #6b4d3b;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    @media (max-width: 920px) {
+      .page {
+        padding: 20px 12px 32px;
+      }
+
+      header {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 29px;
+      }
+
+      .tabs {
+        grid-template-columns: 1fr;
+      }
+
+      .canvas {
+        overflow-x: auto;
+      }
+
+      svg {
+        min-width: 1180px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <div>
+        <h1>心心之火｜用户流程与产品架构图</h1>
+        <p class="subtitle">这里不是功能脑暴图，而是 2 张用户流程图 + 1 张产品架构图。主产品入口为：心火 / 对话 / 轨迹 / 牵绊。</p>
+      </div>
+      <div class="rule-card">设计边界：轨迹是心火记忆，不是健康报表。用户首先看见的是心火和心脏自述，而不是任务卡片或健康管理面板。</div>
+    </header>
+
+    <nav class="tabs" aria-label="流程图标签页">
+      <button class="tab-button active" data-tab="self">用户本人流程图</button>
+      <button class="tab-button" data-tab="family">家人用户流程图</button>
+      <button class="tab-button" data-tab="architecture">产品架构图</button>
+    </nav>
+
+    <section id="self" class="panel active">
+      <div class="canvas">
+        <div class="canvas-head">
+          <div>
+            <h2>用户本人流程图</h2>
+            <p>用户不主动“管理健康”，而是在心火状态、心脏对话和硬件反馈中形成照顾心脏的行为闭环。</p>
+          </div>
+          <div class="legend">
+            <span style="--c:#fff0df;">用户可见</span>
+            <span style="--c:#edf7fb;">后台处理</span>
+            <span style="--c:#fff0f0;">风险兜底</span>
+            <span style="--c:#f3f0ff;">硬件反馈</span>
+          </div>
+        </div>
+
+        <svg viewBox="0 0 1180 760" aria-label="用户本人流程图">
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#9a765d"></path>
+            </marker>
+            <marker id="arrowSoft" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="rgba(154,118,93,0.7)"></path>
+            </marker>
+            <marker id="arrowRed" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#bd3038"></path>
+            </marker>
+          </defs>
+
+          <rect class="lane" x="44" y="112" width="1088" height="128" rx="14"></rect>
+          <rect class="lane" x="44" y="266" width="1088" height="172" rx="14"></rect>
+          <rect class="lane" x="44" y="464" width="1088" height="154" rx="14"></rect>
+          <text class="lane-title" x="64" y="136">后台输入层</text>
+          <text class="lane-title" x="64" y="290">用户可见层</text>
+          <text class="lane-title" x="64" y="488">行为闭环层</text>
+
+          <rect class="box box-backend" x="110" y="146" width="185" height="72" rx="12"></rect>
+          <text class="title" x="132" y="174">手环 / 心火硬件数据</text>
+          <text class="text" x="132" y="198">睡眠、心率、呼吸、症状</text>
+
+          <rect class="box box-backend" x="365" y="146" width="188" height="72" rx="12"></rect>
+          <text class="title" x="386" y="174">后端生成心火状态</text>
+          <text class="text" x="386" y="198">stable / tired / tense...</text>
+
+          <rect class="box box-agent" x="625" y="146" width="205" height="72" rx="12"></rect>
+          <text class="title" x="646" y="174">上下文节奏控制</text>
+          <text class="text" x="646" y="198">稳定低频，异常即时</text>
+
+          <rect class="box box-fire" x="112" y="318" width="205" height="84" rx="12"></rect>
+          <text class="title" x="134" y="348">Tab 1：心火首页</text>
+          <text class="text" x="134" y="372">火焰 + 一句自述</text>
+          <text class="text" x="134" y="392">心率睡眠 + 对话入口</text>
+
+          <polygon class="decision" points="416,318 514,360 416,402 318,360"></polygon>
+          <text class="small-title" x="378" y="354">用户选择</text>
+          <text class="tiny" x="372" y="374">进入对话？</text>
+
+          <rect class="box box-agent" x="548" y="318" width="190" height="84" rx="12"></rect>
+          <text class="title" x="580" y="348">Tab 2：心脏对话</text>
+          <text class="text" x="580" y="372">第一人称表达状态</text>
+          <text class="text" x="580" y="392">微行动在对话里出现</text>
+
+          <rect class="box box-fire" x="760" y="318" width="162" height="84" rx="12"></rect>
+          <text class="title" x="782" y="348">Tab 3：轨迹</text>
+          <text class="text" x="782" y="372">7 天心火记忆</text>
+          <text class="text" x="782" y="392">Agent 周总结</text>
+
+          <polygon class="decision" points="1012,318 1110,360 1012,402 914,360"></polygon>
+          <text class="small-title" x="970" y="354">是否高风险</text>
+          <text class="tiny" x="970" y="374">胸闷 / 胸痛？</text>
+
+          <rect class="box box-risk" x="992" y="430" width="142" height="84" rx="12"></rect>
+          <text class="title" x="1014" y="460">红色兜底</text>
+          <text class="text" x="1014" y="484">停止活动</text>
+          <text class="text" x="1014" y="504">联系家人/急救</text>
+
+          <rect class="box box-hardware" x="130" y="522" width="210" height="72" rx="12"></rect>
+          <text class="title" x="152" y="550">桌面心火硬件</text>
+          <text class="text" x="152" y="574">监测心率/呼吸并呈现状态</text>
+
+          <rect class="box box-fire" x="430" y="522" width="195" height="72" rx="12"></rect>
+          <text class="title" x="452" y="550">用户完成小动作</text>
+          <text class="text" x="452" y="574">走几分钟 / 慢呼吸</text>
+
+          <rect class="box box-family" x="710" y="522" width="205" height="72" rx="12"></rect>
+          <text class="title" x="732" y="550">Tab 4：牵绊</text>
+          <text class="text" x="732" y="574">只分享心火状态</text>
+
+          <rect class="note" x="70" y="644" width="515" height="66" rx="10"></rect>
+          <text class="note-text" x="92" y="670">stable 时不频繁打扰：4-6 小时生成一次心火上下文，</text>
+          <text class="note-text" x="92" y="690">以“我最近很舒服”这类正反馈维持稳定工作流。</text>
+
+          <path class="arrow" d="M295 182 H365"></path>
+          <path class="arrow" d="M553 182 H625"></path>
+          <path class="arrow" d="M728 218 C685 266 472 276 270 318"></path>
+          <path class="arrow" d="M317 360 H318"></path>
+          <path class="arrow" d="M514 360 H548"></path>
+          <path class="arrow" d="M738 360 H760"></path>
+          <path class="arrow" d="M922 360 H914"></path>
+          <path class="arrow-red" d="M1050 402 V430"></path>
+          <path class="arrow-soft" d="M553 182 C420 260 300 410 235 522"></path>
+          <path class="arrow-dash" d="M235 522 C245 400 250 245 365 182"></path>
+          <path class="arrow-soft" d="M663 402 C634 468 570 500 527 522"></path>
+          <path class="arrow-soft" d="M430 558 H340"></path>
+          <path class="arrow-dash" d="M625 558 H710"></path>
+          <path class="arrow-red" d="M1060 514 C1032 550 955 562 915 560"></path>
+
+          <text class="label" x="270" y="452">状态下发</text>
+          <text class="label" x="270" y="292">心率/呼吸回传</text>
+          <text class="label" x="522" y="347">是</text>
+          <text class="label" x="1048" y="420">是</text>
+          <text class="label" x="986" y="304">否</text>
+        </svg>
+      </div>
+    </section>
+
+    <section id="family" class="panel">
+      <div class="canvas">
+        <div class="canvas-head">
+          <div>
+            <h2>家人用户流程图</h2>
+            <p>家人的角色是“牵绊”，不是监督。家人只看见心火状态，不能看到具体健康数据和对话内容。</p>
+          </div>
+          <div class="legend">
+            <span style="--c:#edf8f1;">家人可见</span>
+            <span style="--c:#edf7fb;">权限校验</span>
+            <span style="--c:#fff0f0;">异常通知</span>
+            <span style="--c:#f3f0ff;">硬件回应</span>
+          </div>
+        </div>
+
+        <svg viewBox="0 0 1180 760" aria-label="家人用户流程图">
+          <defs>
+            <marker id="arrowF" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#35735b"></path>
+            </marker>
+            <marker id="arrowFR" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#bd3038"></path>
+            </marker>
+          </defs>
+
+          <rect class="lane" x="44" y="112" width="1088" height="132" rx="14"></rect>
+          <rect class="lane" x="44" y="276" width="1088" height="172" rx="14"></rect>
+          <rect class="lane" x="44" y="480" width="1088" height="136" rx="14"></rect>
+          <text class="lane-title" x="64" y="136">授权与权限</text>
+          <text class="lane-title" x="64" y="300">家人互动</text>
+          <text class="lane-title" x="64" y="504">用户侧反馈</text>
+
+          <rect class="box box-fire" x="100" y="154" width="184" height="72" rx="12"></rect>
+          <text class="title" x="122" y="182">用户发起邀请</text>
+          <text class="text" x="122" y="206">牵绊 Tab / 设置权限</text>
+
+          <rect class="box box-backend" x="360" y="154" width="205" height="72" rx="12"></rect>
+          <text class="title" x="382" y="182">后端校验权限</text>
+          <text class="text" x="382" y="206">none / state / emergency</text>
+
+          <rect class="box box-family" x="650" y="154" width="215" height="72" rx="12"></rect>
+          <text class="title" x="672" y="182">家人接受邀请</text>
+          <text class="text" x="672" y="206">进入轻量家人端</text>
+
+          <rect class="box box-family" x="118" y="330" width="210" height="84" rx="12"></rect>
+          <text class="title" x="140" y="360">查看心火状态</text>
+          <text class="text" x="140" y="384">只看颜色/状态描述</text>
+          <text class="text" x="140" y="404">不看具体数字</text>
+
+          <polygon class="decision" points="456,326 548,372 456,418 364,372"></polygon>
+          <text class="small-title" x="416" y="366">想表达关心</text>
+          <text class="tiny" x="430" y="386">轻触？</text>
+
+          <rect class="box box-family" x="604" y="330" width="188" height="84" rx="12"></rect>
+          <text class="title" x="626" y="360">发送轻触</text>
+          <text class="text" x="626" y="384">戳一下心火</text>
+          <text class="text" x="626" y="404">或一句短关心</text>
+
+          <rect class="box box-risk" x="892" y="330" width="174" height="84" rx="12"></rect>
+          <text class="title" x="914" y="360">异常通知</text>
+          <text class="text" x="914" y="384">仅高风险触发</text>
+          <text class="text" x="914" y="404">按用户权限发送</text>
+
+          <rect class="box box-hardware" x="235" y="530" width="230" height="72" rx="12"></rect>
+          <text class="title" x="257" y="558">用户桌面心火反馈</text>
+          <text class="text" x="257" y="582">轻震 / 闪光 / Agent 一句话</text>
+
+          <rect class="box box-fire" x="555" y="530" width="220" height="72" rx="12"></rect>
+          <text class="title" x="577" y="558">用户保留控制权</text>
+          <text class="text" x="577" y="582">可回应、忽略或关闭分享</text>
+
+          <rect class="note" x="850" y="536" width="290" height="52" rx="10"></rect>
+          <text class="note-text" x="872" y="560">家人模块的价值是“被牵挂”，</text>
+          <text class="note-text" x="872" y="580">不是把家人变成健康管理员。</text>
+
+          <path d="M284 190 H360" class="arrow" marker-end="url(#arrowF)"></path>
+          <path d="M565 190 H650" class="arrow" marker-end="url(#arrowF)"></path>
+          <path d="M758 226 C710 282 445 300 265 330" class="arrow" marker-end="url(#arrowF)"></path>
+          <path d="M328 372 H364" class="arrow" marker-end="url(#arrowF)"></path>
+          <path d="M548 372 H604" class="arrow" marker-end="url(#arrowF)"></path>
+          <path d="M792 372 H892" class="arrow" marker-end="url(#arrowFR)"></path>
+          <path d="M698 414 C650 500 520 534 465 552" class="arrow" marker-end="url(#arrowF)"></path>
+          <path d="M465 566 H555" class="arrow" marker-end="url(#arrowF)"></path>
+          <path d="M979 414 C958 488 880 530 775 558" class="arrow" marker-end="url(#arrowFR)"></path>
+
+          <text class="label" x="552" y="358">是</text>
+          <text class="label" x="804" y="358">红色风险</text>
+        </svg>
+      </div>
+    </section>
+
+    <section id="architecture" class="panel">
+      <div class="canvas">
+        <div class="canvas-head">
+          <div>
+            <h2>产品架构图</h2>
+            <p>产品由感知、App、后台、心火 Agent、心火装置和家人牵绊端组成。对外只展示产品能力，不暴露具体实现供应商。</p>
+          </div>
+          <div class="legend">
+            <span style="--c:#fff0df;">App 层</span>
+            <span style="--c:#edf7fb;">心火后台</span>
+            <span style="--c:#fff6e8;">心火 Agent</span>
+            <span style="--c:#f3f0ff;">心火装置</span>
+          </div>
+        </div>
+
+        <svg viewBox="0 0 1180 760" aria-label="产品架构图">
+          <defs>
+            <marker id="arrowA" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#2e6e8d"></path>
+            </marker>
+            <marker id="arrowAD" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#9a765d"></path>
+            </marker>
+          </defs>
+
+          <rect class="lane" x="50" y="120" width="245" height="506" rx="16"></rect>
+          <rect class="lane" x="330" y="120" width="250" height="506" rx="16"></rect>
+          <rect class="lane" x="615" y="120" width="255" height="506" rx="16"></rect>
+          <rect class="lane" x="905" y="120" width="225" height="506" rx="16"></rect>
+          <text class="lane-title" x="72" y="146">感知与外部参与方</text>
+          <text class="lane-title" x="352" y="146">App 层</text>
+          <text class="lane-title" x="637" y="146">心火后台</text>
+          <text class="lane-title" x="927" y="146">Agent 与心火装置</text>
+
+          <rect class="box box-muted" x="78" y="178" width="188" height="72" rx="12"></rect>
+          <text class="title" x="100" y="206">演示数据</text>
+          <text class="text" x="100" y="230">用于答辩演示场景</text>
+
+          <rect class="box box-muted" x="78" y="288" width="188" height="86" rx="12"></rect>
+          <text class="title" x="100" y="316">手环健康数据</text>
+          <text class="text" x="100" y="340">心率、睡眠、步数</text>
+          <text class="text" x="100" y="360">作为后台上下文</text>
+
+          <rect class="box box-family" x="78" y="420" width="188" height="72" rx="12"></rect>
+          <text class="title" x="100" y="448">家人轻量端</text>
+          <text class="text" x="100" y="472">查看心火 / 发送轻触</text>
+
+          <rect class="box box-fire" x="358" y="174" width="194" height="96" rx="12"></rect>
+          <text class="title" x="380" y="204">心心之火 App</text>
+          <text class="text" x="380" y="228">用户可见主入口</text>
+          <text class="text" x="380" y="248">心火/对话/轨迹/牵绊</text>
+
+          <rect class="box box-fire" x="358" y="302" width="194" height="90" rx="12"></rect>
+          <text class="title" x="380" y="332">App 状态接口</text>
+          <text class="text" x="380" y="356">接收心火状态</text>
+          <text class="text" x="380" y="376">转发装置显示命令</text>
+
+          <rect class="box box-fire" x="358" y="426" width="194" height="94" rx="12"></rect>
+          <text class="title" x="380" y="456">设备连接能力</text>
+          <text class="text" x="380" y="480">读取手环/硬件上下文</text>
+          <text class="text" x="380" y="500">连接心火装置</text>
+
+          <rect class="box box-backend" x="645" y="170" width="196" height="82" rx="12"></rect>
+          <text class="title" x="667" y="200">心火后台入口</text>
+          <text class="text" x="667" y="224">用户、状态、对话、牵绊</text>
+
+          <rect class="box box-backend" x="645" y="286" width="196" height="94" rx="12"></rect>
+          <text class="title" x="667" y="316">数据融合层</text>
+          <text class="text" x="667" y="340">手环 + 心火硬件 + 症状</text>
+          <text class="text" x="667" y="360">融合成心火上下文</text>
+
+          <rect class="box box-backend" x="645" y="416" width="196" height="104" rx="12"></rect>
+          <text class="title" x="667" y="446">产品逻辑层</text>
+          <text class="text" x="667" y="470">生成心火状态</text>
+          <text class="text" x="667" y="490">控制上下文生成节奏</text>
+
+          <rect class="box box-agent" x="930" y="172" width="172" height="96" rx="12"></rect>
+          <text class="title" x="952" y="202">心火 Agent</text>
+          <text class="text" x="952" y="226">心脏第一人称</text>
+          <text class="text" x="952" y="246">生成自述与回应</text>
+
+          <rect class="box box-hardware" x="930" y="322" width="172" height="96" rx="12"></rect>
+          <text class="title" x="952" y="352">桌面心火装置</text>
+          <text class="text" x="952" y="376">监测心率/呼吸</text>
+          <text class="text" x="952" y="396">按后端状态变化</text>
+
+          <rect class="box box-backend" x="930" y="472" width="172" height="82" rx="12"></rect>
+          <text class="title" x="952" y="502">状态与记忆</text>
+          <text class="text" x="952" y="526">对话、权限、心火历史</text>
+
+          <rect class="note" x="214" y="650" width="752" height="46" rx="10"></rect>
+          <text class="note-text" x="236" y="678">架构可以处理健康数据，但前端只表达为心火、对话和牵绊，避免产品滑回传统健康管理范式。</text>
+
+          <path d="M266 214 H358" class="arrow" marker-end="url(#arrowA)"></path>
+          <path d="M266 334 H358" class="arrow" marker-end="url(#arrowA)"></path>
+          <path d="M266 456 C300 456 318 352 358 352" class="arrow" marker-end="url(#arrowA)"></path>
+          <path d="M552 222 H645" class="arrow" marker-end="url(#arrowA)"></path>
+          <path d="M552 348 H645" class="arrow" marker-end="url(#arrowA)"></path>
+          <path d="M552 474 H645" class="arrow" marker-end="url(#arrowA)"></path>
+          <path d="M841 210 H930" class="arrow" marker-end="url(#arrowA)"></path>
+          <path d="M841 336 C880 336 898 370 930 370" class="arrow" marker-end="url(#arrowA)"></path>
+          <path d="M930 392 C850 430 822 382 790 380" class="arrow-dash" marker-end="url(#arrowAD)"></path>
+          <path d="M645 468 C575 560 460 560 455 520" class="arrow-dash" marker-end="url(#arrowAD)"></path>
+          <path d="M841 468 C880 468 898 514 930 514" class="arrow" marker-end="url(#arrowA)"></path>
+          <path d="M930 238 C870 280 850 302 841 316" class="arrow-dash" marker-end="url(#arrowAD)"></path>
+          <path d="M930 390 C840 560 510 580 455 520" class="arrow-dash" marker-end="url(#arrowAD)"></path>
+        </svg>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const buttons = [...document.querySelectorAll(".tab-button")];
+    const panels = [...document.querySelectorAll(".panel")];
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const target = button.dataset.tab;
+        buttons.forEach((item) => item.classList.toggle("active", item === button));
+        panels.forEach((panel) => panel.classList.toggle("active", panel.id === target));
+      });
+    });
+  </script>
+</body>
+</html>

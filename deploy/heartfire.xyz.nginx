@@ -7,10 +7,12 @@ server {
     index heartfire-v2.html;
 
     location = / {
+        add_header Cache-Control "no-store, no-cache, must-revalidate" always;
         try_files /heartfire-v2.html =404;
     }
 
     location = /family {
+        add_header Cache-Control "no-store, no-cache, must-revalidate" always;
         try_files /heartfire-family.html =404;
     }
 

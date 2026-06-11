@@ -135,7 +135,7 @@ function localFallback(payload) {
   }
 
   return {
-    reply: '嗯。我在。你想先说睡眠、胸口，还是这两天的状态？',
+    reply: '我在。你现在不知道咋整也没事，先把话放这儿。要不先做一件小事：喝口水，慢一点。',
     suggestions: DEFAULT_SUGGESTIONS,
     source: 'fallback'
   };

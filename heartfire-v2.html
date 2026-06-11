@@ -724,6 +724,8 @@ body {
   line-height: 1.85;
   letter-spacing: 0.03em;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   animation: msg-appear 0.4s ease;
   font-family: var(--serif);
 }
@@ -905,27 +907,40 @@ body {
 
 .chat-input {
   margin: 6px 16px 14px;
-  padding: 5px 5px 5px 18px;
+  padding: 5px 5px 5px 16px;
   background: var(--paper);
   border: 1px solid var(--paper-edge);
-  border-radius: 100px;
+  border-radius: 26px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 8px;
   flex-shrink: 0;
+  min-width: 0;
 }
-.chat-input input {
+.chat-input textarea {
   flex: 1;
+  min-width: 0;
+  height: 36px;
+  max-height: 50px;
   background: transparent;
   border: none;
   outline: none;
   color: var(--ink-1);
   font-size: 13px;
+  line-height: 1.55;
   font-family: var(--serif);
-  padding: 9px 0;
+  padding: 8px 0;
   letter-spacing: 0.02em;
+  resize: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  -webkit-overflow-scrolling: touch;
 }
-.chat-input input::placeholder {
+.chat-input textarea::-webkit-scrollbar { display: none; }
+.chat-input textarea::placeholder {
   color: var(--ink-4);
   font-family: var(--serif);
 }
@@ -2948,7 +2963,7 @@ body {
             <button class="mic-btn" id="mic-btn" title="语音输入">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
             </button>
-            <input type="text" id="chat-input-text" placeholder="和我说点什么…" autocomplete="off">
+            <textarea id="chat-input-text" placeholder="和我说点什么…" autocomplete="off" rows="1"></textarea>
             <button class="send-btn" id="chat-send-btn">↑</button>
           </div>
         </div>
@@ -4273,6 +4288,18 @@ function hideTyping() {
   if (t) t.remove();
 }
 
+function resizeChatInput() {
+  const el = els.chatInputText;
+  if (!el) return;
+  const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || 20;
+  const verticalPadding = 16;
+  const maxHeight = Math.ceil(lineHeight * 2 + verticalPadding);
+  el.style.height = '36px';
+  const nextHeight = Math.min(el.scrollHeight, maxHeight);
+  el.style.height = `${Math.max(36, nextHeight)}px`;
+  el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden';
+}
+
 function resetChat() {
   els.chatStream.innerHTML = '';
   state.messages = [];
@@ -4492,6 +4519,7 @@ async function sendUserMessage(text) {
   appendMessage({ role: 'user', text });
   rememberMessage('user', text);
   els.chatInputText.value = '';
+  resizeChatInput();
   els.chatSuggestions.innerHTML = '';
   state.waitingReply = true;
 
@@ -4532,8 +4560,12 @@ async function sendUserMessage(text) {
 
 els.chatSendBtn.addEventListener('click', () => sendUserMessage(els.chatInputText.value));
 els.chatInputText.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') sendUserMessage(els.chatInputText.value);
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendUserMessage(els.chatInputText.value);
+  }
 });
+els.chatInputText.addEventListener('input', resizeChatInput);
 
 els.chatSuggestions.addEventListener('click', (e) => {
   if (e.target.classList.contains('suggestion')) {

@@ -1,0 +1,16 @@
+[Unit]
+Description=Heartfire Agent API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/heartfire-api
+ExecStart=/root/.nvm/versions/node/v22.22.2/bin/node /opt/heartfire-api/server.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+Environment=PORT=3210
+
+[Install]
+WantedBy=multi-user.target

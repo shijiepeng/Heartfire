@@ -3977,6 +3977,8 @@ const state = {
   scenario: 'tired',
   messages: [],
   waitingReply: false,
+  clientSessionId: localStorage.getItem('heartfireClientSessionId') || `web-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+  agentSuggestions: null,
   heartName: '我的心脏',
   personality: 'approachable',
   onboarded: false,
@@ -3986,6 +3988,13 @@ const state = {
   onboardPersonality: 'approachable',
   voiceReplyOn: false,
 };
+
+localStorage.setItem('heartfireClientSessionId', state.clientSessionId);
+
+const HEARTFIRE_AGENT_API = (() => {
+  if (location.protocol === 'file:') return 'https://heartfire.xyz/api/heartfire/chat';
+  return '/api/heartfire/chat';
+})();
 
 /* ============================================================
    DOM
@@ -4175,6 +4184,26 @@ els.tabs.forEach(t => t.addEventListener('click', () => setTab(t.dataset.tab)));
    CHAT
    ============================================================ */
 
+function escapeHTML(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function stripHTML(value) {
+  const div = document.createElement('div');
+  div.innerHTML = String(value || '');
+  return div.textContent || div.innerText || '';
+}
+
+function rememberMessage(role, text) {
+  state.messages.push({ role, text: stripHTML(text).slice(0, 600) });
+  if (state.messages.length > 16) state.messages = state.messages.slice(-16);
+}
+
 function appendMessage({ role, text, serious = false, action = null, chips = null }) {
   const stream = els.chatStream;
 
@@ -4191,7 +4220,7 @@ function appendMessage({ role, text, serious = false, action = null, chips = nul
     const speakerSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`;
     msg.innerHTML = text.replace(/\n/g, '<br>') + `<button class="msg-speaker" title="朗读">${speakerSvg}</button>`;
   } else {
-    msg.innerHTML = text.replace(/\n/g, '<br>');
+    msg.innerHTML = escapeHTML(text).replace(/\n/g, '<br>');
   }
 
   if (action) {
@@ -4246,6 +4275,8 @@ function hideTyping() {
 
 function resetChat() {
   els.chatStream.innerHTML = '';
+  state.messages = [];
+  state.agentSuggestions = null;
   const s = SCENARIOS[state.scenario];
 
   // Per-personality dialogue lookup; fallback to scenario.dialogue if missing
@@ -4260,13 +4291,14 @@ function resetChat() {
       serious: turn.serious || false,
       chips: turn.chips || null,
     });
+    rememberMessage(turn.role, turn.text);
   });
 
   renderSuggestions();
 }
 
-function renderSuggestions() {
-  const suggestions = [
+function renderSuggestions(nextSuggestions = null) {
+  const suggestions = nextSuggestions || state.agentSuggestions || [
     { label: '昨晚只睡了五小时', kind: 'sleep' },
     { label: '我坐好久了', kind: 'sitting' },
     { label: '刚才运动了一下', kind: 'exercise' },
@@ -4274,7 +4306,7 @@ function renderSuggestions() {
   ];
 
   els.chatSuggestions.innerHTML = suggestions.map(item =>
-    `<button class="suggestion" data-soul-scene="${item.kind}">${item.label}</button>`
+    `<button class="suggestion" data-soul-scene="${escapeHTML(item.kind || '')}">${escapeHTML(item.label || item)}</button>`
   ).join('');
 }
 
@@ -4287,7 +4319,7 @@ function getSoulSceneReply(sceneKey) {
 /* ============================================================
    REPLY GENERATOR — all voice strictly per soul.md
    ============================================================ */
-function generateReply(userText) {
+function generateLocalReply(userText) {
   const t = userText.trim();
 
   if (/五小时|5\s*小时|睡眠不足|缺觉|没睡够|熬夜/.test(t)) {
@@ -4405,19 +4437,69 @@ function generateReply(userText) {
   };
 }
 
-function sendUserMessage(text) {
+function buildAgentPayload(userText) {
+  const s = SCENARIOS[state.scenario];
+  return {
+    message: userText,
+    heartName: state.heartName,
+    personality: state.personality,
+    scenario: state.scenario,
+    clientSessionId: state.clientSessionId,
+    health: {
+      heartRate: s.hr,
+      heartRateRange: '0-200 bpm',
+      lastUpdated: `${s.greeting} ${s.time}`,
+      sleepHours: s.sleep,
+      risk: s.risk,
+      scenarioLabel: s.label,
+      source: 'prototype'
+    },
+    recentMessages: state.messages.slice(-8)
+  };
+}
+
+function normalizeAgentReply(data, fallback) {
+  const replyText = data && (data.reply || data.text);
+  return {
+    text: replyText || fallback.text,
+    serious: Boolean(data && data.serious) || Boolean(fallback.serious),
+    action: fallback.action || (data && data.action),
+    chips: (data && data.chips) || fallback.chips,
+    suggestions: data && data.suggestions,
+    source: data && data.source
+  };
+}
+
+async function generateAgentReply(userText) {
+  const fallback = generateLocalReply(userText);
+  try {
+    const res = await fetch(HEARTFIRE_AGENT_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(buildAgentPayload(userText))
+    });
+    if (!res.ok) throw new Error(`agent_http_${res.status}`);
+    const data = await res.json();
+    return normalizeAgentReply(data, fallback);
+  } catch (err) {
+    return { ...fallback, source: 'local' };
+  }
+}
+
+async function sendUserMessage(text) {
   if (!text.trim() || state.waitingReply) return;
 
   appendMessage({ role: 'user', text });
+  rememberMessage('user', text);
   els.chatInputText.value = '';
   els.chatSuggestions.innerHTML = '';
   state.waitingReply = true;
 
-  setTimeout(() => {
+  setTimeout(async () => {
     showTyping();
-    setTimeout(() => {
+    try {
+      const reply = await generateAgentReply(text);
       hideTyping();
-      const reply = generateReply(text);
       appendMessage({
         role: 'heart',
         text: reply.text,
@@ -4425,9 +4507,26 @@ function sendUserMessage(text) {
         action: reply.action,
         chips: reply.chips,
       });
+      rememberMessage('heart', reply.text);
+      if (Array.isArray(reply.suggestions) && reply.suggestions.length) {
+        state.agentSuggestions = reply.suggestions;
+      }
       state.waitingReply = false;
       renderSuggestions();
-    }, 900);
+    } catch (err) {
+      hideTyping();
+      const reply = generateLocalReply(text);
+      appendMessage({
+        role: 'heart',
+        text: reply.text,
+        serious: reply.serious,
+        action: reply.action,
+        chips: reply.chips,
+      });
+      rememberMessage('heart', reply.text);
+      state.waitingReply = false;
+      renderSuggestions();
+    }
   }, 350);
 }
 

@@ -1,0 +1,34 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name heartfire.xyz www.heartfire.xyz;
+
+    root /opt/heartfire-web;
+    index heartfire-v2.html;
+
+    location = / {
+        try_files /heartfire-v2.html =404;
+    }
+
+    location = /family {
+        try_files /heartfire-family.html =404;
+    }
+
+    location /assets/ {
+        try_files $uri =404;
+    }
+
+    location /api/heartfire/ {
+        proxy_pass http://127.0.0.1:3210/api/heartfire/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 120s;
+    }
+
+    location = /health {
+        proxy_pass http://127.0.0.1:3210/health;
+    }
+}
